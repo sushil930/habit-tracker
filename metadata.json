@@ -1,0 +1,5 @@
+{
+  "name": "HabitFlow",
+  "description": "A premium SaaS-style habit tracker with weekly views, progress analytics, and seamless data persistence.",
+  "requestFramePermissions": []
+}
