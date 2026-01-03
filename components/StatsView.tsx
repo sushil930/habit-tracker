@@ -195,7 +195,10 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false }
   const tooltipCursorColor = darkMode ? '#1e293b' : '#f8fafc';
 
   return (
-    <div className="space-y-6 animate-in fade-in sli2 lg:grid-cols-4 gap-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+      
+      {/* Top Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-32 relative overflow-hidden group transition-colors">
           <div className="relative z-10">
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Habits</p>
@@ -237,10 +240,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false }
           <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
             <Zap size={64} className="text-orange-500 dark:text-orange-400" />
           </div>
-          <div className="h-1 w-full bg-gradient-to-r from-orange-500 to-orange-100 dark:to-orangeon-opacity">
-            <PieChartIcon size={64} className="text-amber-500 dark:text-amber-400" />
-          </div>
-          <div className="h-1 w-full bg-gradient-to-r from-amber-500 to-amber-100 dark:to-amber-900 absolute bottom-0 left-0" />
+          <div className="h-1 w-full bg-gradient-to-r from-orange-500 to-orange-100 dark:to-orange-900 absolute bottom-0 left-0" />
         </div>
       </div>
 
