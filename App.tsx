@@ -111,6 +111,10 @@ const App: React.FC = () => {
     }
   }, [habits, isLoading]);
 
+  useEffect(() => {
+    saveHabits(habits);
+  }, [habits]);
+
   const datesToDisplay = useMemo(() => {
     if (timeRange === 'week') {
       const start = startOfWeek(currentDate, { weekStartsOn: 1 });

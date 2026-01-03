@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { Habit } from '../types';
-import { calculateCompletionRate } from '../services/habitService';
+import { calculateCompletionRate, calculateLongestStreak } from '../services/habitService';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, 
   LineChart, Line, PieChart, Pie, Legend, Area, AreaChart
 } from 'recharts';
 import { format, subDays, startOfDay, getDay, parseISO, eachDayOfInterval, startOfWeek, addDays, isAfter } from 'date-fns';
-import { TrendingUp, Calendar, PieChart as PieChartIcon, Activity } from 'lucide-react';
+import { TrendingUp, Calendar, PieChart as PieChartIcon, Activity, Zap } from 'lucide-react';
 
 interface StatsViewProps {
   habits: Habit[];
@@ -18,19 +18,22 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#0ea5e9'
 export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false }) => {
   
   // 1. Total Stats Calculation
-  const { totalCompletions, avgSuccessRate, totalActive } = useMemo(() => {
+  const { totalCompletions, avgSuccessRate, totalActive, bestStreak } = useMemo(() => {
     const active = habits.filter(h => !h.archived);
     const completions = habits.reduce((acc, h) => acc + Object.keys(h.logs).length, 0);
     
     let totalRate = 0;
+    let maxStreak = 0;
     if (habits.length > 0) {
       totalRate = habits.reduce((acc, h) => acc + calculateCompletionRate(h, 30), 0) / habits.length;
+      maxStreak = habits.reduce((max, h) => Math.max(max, calculateLongestStreak(h)), 0);
     }
 
     return {
       totalCompletions: completions,
       avgSuccessRate: Math.round(totalRate),
-      totalActive: active.length
+      totalActive: active.length,
+      bestStreak: maxStreak
     };
   }, [habits]);
 
@@ -108,7 +111,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false }
 
   // 6. Global Contribution Graph (Heatmap)
   const heatmapData = useMemo(() => {
-    const today = new Date();
+    const today = startOfDay(new Date());
     // Go back 52 weeks to show a full year view roughly
     const startDate = subDays(today, 364); 
     const calendarStart = startOfWeek(startDate); // Start on Sunday
@@ -192,10 +195,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false }
   const tooltipCursorColor = darkMode ? '#1e293b' : '#f8fafc';
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
-      
-      {/* Top Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="space-y-6 animate-in fade-in sli2 lg:grid-cols-4 gap-6">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-32 relative overflow-hidden group transition-colors">
           <div className="relative z-10">
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Habits</p>
@@ -224,6 +224,20 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false }
             <p className="text-3xl font-bold text-amber-500 dark:text-amber-400 mt-2">{avgSuccessRate}%</p>
           </div>
           <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+            <PieChartIcon size={64} className="text-amber-500 dark:text-amber-400" />
+          </div>
+          <div className="h-1 w-full bg-gradient-to-r from-amber-500 to-amber-100 dark:to-amber-900 absolute bottom-0 left-0" />
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-32 relative overflow-hidden group transition-colors">
+           <div className="relative z-10">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Highest Streak</p>
+            <p className="text-3xl font-bold text-orange-500 dark:text-orange-400 mt-2">{bestStreak}</p>
+          </div>
+          <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+            <Zap size={64} className="text-orange-500 dark:text-orange-400" />
+          </div>
+          <div className="h-1 w-full bg-gradient-to-r from-orange-500 to-orange-100 dark:to-orangeon-opacity">
             <PieChartIcon size={64} className="text-amber-500 dark:text-amber-400" />
           </div>
           <div className="h-1 w-full bg-gradient-to-r from-amber-500 to-amber-100 dark:to-amber-900 absolute bottom-0 left-0" />

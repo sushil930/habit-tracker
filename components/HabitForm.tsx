@@ -87,16 +87,16 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 dark:bg-black/60 backdrop-blur-sm p-4 overflow-y-auto transition-colors">
-      <div id="habit-form-modal" className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-lg border border-slate-100 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 dark:bg-black/60 backdrop-blur-sm p-4 transition-colors">
+      <div id="habit-form-modal" className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50 shrink-0">
           <h3 className="font-semibold text-slate-900 dark:text-white">Create New Habit</h3>
           <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Habit Name</label>
             <div className="flex gap-3">
@@ -114,14 +114,16 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Read for 30 mins"
                 autoFocus
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-white dark:bg-slate-950"
+                className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-white dark:bg-slate-950"
               />
             </div>
           </div>
 
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Icon</label>
-            <div className="grid grid-cols-7 sm:grid-cols-9 gap-2 p-3 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-100 dark:border-slate-800 max-h-40 overflow-y-auto custom-scrollbar">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Icon Section */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Icon</label>
+              <div className="grid grid-cols-7 gap-2 p-3 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-100 dark:border-slate-800 max-h-52 overflow-y-auto custom-scrollbar">
               {AVAILABLE_ICONS.map((item) => {
                 const isSelected = selectedIcon === item.name;
                 return (
@@ -143,6 +145,52 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+            {/* Color Section */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Color</label>
+              <div className="flex gap-3 flex-wrap p-3 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-100 dark:border-slate-800 h-full content-start">
+                {COLORS.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => setSelectedColor(color.value)}
+                    className={`w-8 h-8 rounded-full transition-all flex items-center justify-center ${
+                      selectedColor === color.value 
+                        ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110 shadow-sm' 
+                        : 'hover:scale-110 opacity-70 hover:opacity-100'
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                    aria-label={color.label}
+                    title={color.label}
+                  >
+                    {selectedColor === color.value && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+                  </button>
+                ))}
+                
+                <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+                {/* Native Color Picker */}
+                <label 
+                  className={`w-8 h-8 rounded-full cursor-pointer transition-all flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 ${
+                     !COLORS.find(c => c.value === selectedColor)
+                      ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110 shadow-sm' 
+                      : 'hover:scale-110 opacity-90 hover:opacity-100'
+                  }`}
+                  title="Custom Color"
+                >
+                  <input 
+                    type="color" 
+                    value={selectedColor}
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                  />
+                  {!COLORS.find(c => c.value === selectedColor) && <Check className="w-4 h-4 text-white drop-shadow-md" strokeWidth={3} />}
+                  {COLORS.find(c => c.value === selectedColor) && <Palette className="w-4 h-4 text-white" strokeWidth={2.5} />}
+                </label>
+              </div>
             </div>
           </div>
 
@@ -204,52 +252,7 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
             </div>
           </div>
 
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Color</label>
-            <div className="flex gap-3 flex-wrap p-3 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-100 dark:border-slate-800">
-              {COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  type="button"
-                  onClick={() => setSelectedColor(color.value)}
-                  className={`w-6 h-6 rounded-full transition-all flex items-center justify-center ${
-                    selectedColor === color.value 
-                      ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110 shadow-sm' 
-                      : 'hover:scale-110 opacity-70 hover:opacity-100'
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                  aria-label={color.label}
-                  title={color.label}
-                >
-                  {selectedColor === color.value && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-                </button>
-              ))}
-              
-              <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
-
-              {/* Native Color Picker */}
-              <label 
-                className={`w-6 h-6 rounded-full cursor-pointer transition-all flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 ${
-                   !COLORS.find(c => c.value === selectedColor)
-                    ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110 shadow-sm' 
-                    : 'hover:scale-110 opacity-90 hover:opacity-100'
-                }`}
-                title="Custom Color"
-              >
-                <input 
-                  type="color" 
-                  value={selectedColor}
-                  onChange={(e) => setSelectedColor(e.target.value)}
-                  className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                />
-                {!COLORS.find(c => c.value === selectedColor) && <Check className="w-3 h-3 text-white drop-shadow-md" strokeWidth={3} />}
-                {COLORS.find(c => c.value === selectedColor) && <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />}
-              </label>
-
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <Button type="button" variant="secondary" onClick={onCancel}>
               Cancel
             </Button>
