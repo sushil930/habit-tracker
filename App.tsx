@@ -85,6 +85,25 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
+  // Keyboard navigation for week view
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (viewMode !== 'dashboard' || timeRange !== 'week') return;
+      
+      // Ignore if modal or form is open (simple check)
+      if (isFormOpen || habitToDelete) return;
+
+      if (e.key === 'ArrowLeft') {
+        setCurrentDate(prev => subWeeks(prev, 1));
+      } else if (e.key === 'ArrowRight') {
+        setCurrentDate(prev => addWeeks(prev, 1));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewMode, timeRange, isFormOpen, habitToDelete]);
+
   // Load data on mount
   useEffect(() => {
     const data = loadHabits();

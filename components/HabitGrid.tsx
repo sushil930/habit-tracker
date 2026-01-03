@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { format, isSameDay, startOfDay, getDay, isAfter, getWeek } from 'date-fns';
+import { format, isSameDay, startOfDay, getDay, isAfter, getWeek, subWeeks, addWeeks, startOfWeek, addDays } from 'date-fns';
 import { Habit, TimeRange } from '../types';
-import { Check, Flame, Trash2, Sparkles, Archive } from 'lucide-react';
+import { Check, Flame, Trash2, Sparkles, Archive, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { calculateStreak } from '../services/habitService';
 import { HabitIcon } from './HabitIcon';
 
@@ -66,6 +66,13 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
         <span className={textClass}>{streak}</span>
       </div>
     );
+  };
+
+  // Helper to calculate weekly stats
+  const getWeeklyStats = (habit: Habit, weekStart: Date) => {
+    const weekDates = Array.from({ length: 7 }, (_, i) => format(addDays(weekStart, i), 'yyyy-MM-dd'));
+    const completed = weekDates.filter(d => habit.logs[d]).length;
+    return { completed, rate: Math.round((completed / 7) * 100) };
   };
 
   // Determine if we should use the heatmap view (compact) or the table view (checkboxes)
@@ -228,6 +235,14 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
           <thead>
             <tr className="bg-slate-50/50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
               <th className="p-4 w-64 font-medium text-slate-500 dark:text-slate-400 text-sm sticky left-0 bg-slate-50/50 dark:bg-slate-950/50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] dark:shadow-none">Habit</th>
+              
+              {/* Prev Week Preview (Week View Only) */}
+              {timeRange === 'week' && (
+                <th className="p-4 text-center font-medium text-slate-400 dark:text-slate-600 text-xs w-16 border-r border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
+                  Prev
+                </th>
+              )}
+
               {dates.map((date) => {
                 const isToday = isSameDay(date, today);
                 return (
@@ -241,6 +256,19 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                   </th>
                 );
               })}
+
+              {/* Next Week Preview (Week View Only) */}
+              {timeRange === 'week' && (
+                <th className="p-4 text-center font-medium text-slate-400 dark:text-slate-600 text-xs w-16 border-l border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
+                  Next
+                </th>
+              )}
+
+              {/* Weekly Score (Week View Only) */}
+              {timeRange === 'week' && (
+                <th className="p-4 w-24 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Score</th>
+              )}
+
               <th className="p-4 w-24 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Streak</th>
               <th className="p-4 w-20 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Actions</th>
             </tr>
@@ -250,6 +278,20 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
               const streak = calculateStreak(habit);
               const { isTailwind, color } = getColorProps(habit.color);
               
+              // Weekly Stats Calculation
+              let prevStats, currentStats, nextStats, delta = 0;
+              if (timeRange === 'week' && dates.length > 0) {
+                const currentWeekStart = dates[0];
+                const prevWeekStart = subWeeks(currentWeekStart, 1);
+                const nextWeekStart = addWeeks(currentWeekStart, 1);
+                
+                prevStats = getWeeklyStats(habit, prevWeekStart);
+                currentStats = getWeeklyStats(habit, currentWeekStart);
+                nextStats = getWeeklyStats(habit, nextWeekStart);
+                
+                delta = currentStats.completed - prevStats.completed;
+              }
+
               return (
                 <tr key={habit.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                   <td className="p-4 sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 transition-colors z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] dark:shadow-none">
@@ -266,6 +308,14 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                       </div>
                     </div>
                   </td>
+
+                  {/* Prev Week Preview */}
+                  {timeRange === 'week' && prevStats && (
+                    <td className="p-4 text-center border-r border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
+                      <span className="text-xs font-medium text-slate-400 dark:text-slate-600">{prevStats.completed}/7</span>
+                    </td>
+                  )}
+
                   {dates.map((date) => {
                     const dateStr = format(date, 'yyyy-MM-dd');
                     const isCompleted = !!habit.logs[dateStr];
@@ -292,6 +342,29 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                       </td>
                     );
                   })}
+
+                  {/* Next Week Preview */}
+                  {timeRange === 'week' && nextStats && (
+                    <td className="p-4 text-center border-l border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
+                      <span className="text-xs font-medium text-slate-400 dark:text-slate-600">{nextStats.completed}/7</span>
+                    </td>
+                  )}
+
+                  {/* Weekly Score & Delta */}
+                  {timeRange === 'week' && currentStats && (
+                    <td className="p-4 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">{currentStats.completed}/7</span>
+                        <div className={`flex items-center text-[10px] font-bold mt-0.5 ${
+                          delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-rose-500' : 'text-slate-400'
+                        }`}>
+                          {delta > 0 ? <TrendingUp size={10} className="mr-0.5" /> : delta < 0 ? <TrendingDown size={10} className="mr-0.5" /> : <Minus size={10} className="mr-0.5" />}
+                          {delta > 0 ? '+' : ''}{delta}
+                        </div>
+                      </div>
+                    </td>
+                  )}
+
                   <td className="p-4 text-center">
                     {renderStreakCell(streak)}
                   </td>
