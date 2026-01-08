@@ -9,10 +9,11 @@ export const loadHabits = (): Habit[] => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return [];
     const parsed = JSON.parse(saved);
-    // Migration: ensure category exists
+    // Migration: ensure category and frequency exist
     return parsed.map((h: any) => ({
       ...h,
       category: h.category || 'General',
+      frequency: h.frequency || { type: 'daily', goal: 1 },
     }));
   } catch (e) {
     console.error("Failed to load habits", e);

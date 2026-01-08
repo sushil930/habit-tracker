@@ -18,6 +18,33 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks(id) {
+              if (!id.includes('node_modules')) return;
+
+              if (id.includes('react-dom') || id.includes('react')) {
+                return 'react-vendor';
+              }
+
+              if (id.includes('recharts') || id.includes('/d3-')) {
+                return 'charts';
+              }
+
+              if (id.includes('lucide-react')) {
+                return 'icons';
+              }
+
+              if (id.includes('date-fns')) {
+                return 'date';
+              }
+
+              return 'vendor';
+            },
+          },
+        },
+      },
     };
 });

@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { format, isSameDay, startOfDay, getDay, isAfter, getWeek, subWeeks, addWeeks, startOfWeek, addDays } from 'date-fns';
+import { format, isSameDay, startOfDay, getDay, isAfter, getWeek, subWeeks, addWeeks, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { Habit, TimeRange } from '../types';
 import { Check, Flame, Trash2, Sparkles, Archive, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { calculateStreak } from '../services/habitService';
+import fireGif from '../src/assets/icons8-fire.gif';
 import { HabitIcon } from './HabitIcon';
 
 interface HabitGridProps {
@@ -62,7 +63,11 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
 
     return (
       <div className="flex items-center justify-center gap-1 transition-all duration-300 group/streak" title={`${streak} day streak`}>
-        <Flame className={`${iconClass} transition-all duration-500`} />
+        {streak > 0 ? (
+          <img src={fireGif} alt="Streak" className={`${iconClass.includes('w-5') ? 'w-5 h-5' : 'w-4 h-4'} object-contain transition-all duration-500`} />
+        ) : (
+          <Flame className={`${iconClass} transition-all duration-500`} />
+        )}
         <span className={textClass}>{streak}</span>
       </div>
     );
@@ -73,6 +78,38 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
     const weekDates = Array.from({ length: 7 }, (_, i) => format(addDays(weekStart, i), 'yyyy-MM-dd'));
     const completed = weekDates.filter(d => habit.logs[d]).length;
     return { completed, rate: Math.round((completed / 7) * 100) };
+  };
+
+  // Helper to calculate target progress
+  const getTargetProgress = (habit: Habit, dateInPeriod: Date) => {
+    const freq = habit.frequency || { type: 'daily', goal: 1 };
+    
+    if (freq.type === 'daily') {
+      // For daily, we treat it as 7 days/week in the week view
+      const start = startOfWeek(dateInPeriod, { weekStartsOn: 1 }); // Assuming Monday start for consistency
+      const end = addDays(start, 6);
+      const days = eachDayOfInterval({ start, end });
+      const completed = days.filter(d => habit.logs[format(d, 'yyyy-MM-dd')]).length;
+      return { current: completed, target: 7, label: 'Weekly' };
+    }
+    
+    if (freq.type === 'weekly') {
+      const start = startOfWeek(dateInPeriod, { weekStartsOn: 1 });
+      const end = addDays(start, 6);
+      const days = eachDayOfInterval({ start, end });
+      const completed = days.filter(d => habit.logs[format(d, 'yyyy-MM-dd')]).length;
+      return { current: completed, target: freq.goal, label: 'Weekly' };
+    }
+    
+    if (freq.type === 'monthly') {
+      const start = startOfMonth(dateInPeriod);
+      const end = endOfMonth(dateInPeriod);
+      const days = eachDayOfInterval({ start, end });
+      const completed = days.filter(d => habit.logs[format(d, 'yyyy-MM-dd')]).length;
+      return { current: completed, target: freq.goal, label: 'Monthly' };
+    }
+    
+    return { current: 0, target: 0, label: '' };
   };
 
   // Determine if we should use the heatmap view (compact) or the table view (checkboxes)
@@ -97,7 +134,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
           
           {/* Main Icon Circle */}
           <div className="relative bg-white dark:bg-slate-800 w-24 h-24 rounded-full flex items-center justify-center shadow-xl shadow-indigo-100 dark:shadow-none border border-indigo-50 dark:border-slate-700">
-            <Flame className="w-12 h-12 text-indigo-500 fill-indigo-100 dark:fill-indigo-900/30" strokeWidth={1.5} />
+            <img src={fireGif} alt="Flame" className="w-12 h-12 object-contain" />
           </div>
 
           {/* Floating Badge */}
@@ -264,9 +301,9 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                 </th>
               )}
 
-              {/* Weekly Score (Week View Only) */}
+              {/* Target Progress (Week View Only) */}
               {timeRange === 'week' && (
-                <th className="p-4 w-24 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Score</th>
+                <th className="p-4 w-32 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Target</th>
               )}
 
               <th className="p-4 w-24 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Streak</th>
@@ -304,7 +341,11 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                       </div>
                       <div>
                         <p className="font-medium text-slate-900 dark:text-slate-200 whitespace-nowrap">{habit.name}</p>
-                        {streak > 3 && <p className="text-xs text-orange-500 flex items-center gap-1"><Flame size={10} /> On fire!</p>}
+                        {streak > 3 && (
+                          <p className="text-xs text-orange-500 flex items-center gap-1">
+                            <img src={fireGif} alt="Flame" className="w-3 h-3 object-contain" /> On fire!
+                          </p>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -350,18 +391,33 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                     </td>
                   )}
 
-                  {/* Weekly Score & Delta */}
-                  {timeRange === 'week' && currentStats && (
-                    <td className="p-4 text-center">
-                      <div className="flex flex-col items-center justify-center">
-                        <span className="font-bold text-slate-700 dark:text-slate-300">{currentStats.completed}/7</span>
-                        <div className={`flex items-center text-[10px] font-bold mt-0.5 ${
-                          delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-rose-500' : 'text-slate-400'
-                        }`}>
-                          {delta > 0 ? <TrendingUp size={10} className="mr-0.5" /> : delta < 0 ? <TrendingDown size={10} className="mr-0.5" /> : <Minus size={10} className="mr-0.5" />}
-                          {delta > 0 ? '+' : ''}{delta}
-                        </div>
-                      </div>
+                  {/* Target Progress */}
+                  {timeRange === 'week' && dates.length > 0 && (
+                    <td className="p-4 text-center align-middle">
+                      {(() => {
+                         const progress = getTargetProgress(habit, dates[0]);
+                         const percent = Math.min(100, Math.round((progress.current / progress.target) * 100));
+                         const isMet = progress.current >= progress.target;
+                         
+                         return (
+                           <div className="flex flex-col gap-1.5 w-24 mx-auto">
+                             <div className="flex justify-between items-end text-xs">
+                               <span className={`font-bold ${isMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                                 {progress.current}/{progress.target}
+                               </span>
+                               <span className="text-[10px] text-slate-400 uppercase">{progress.label}</span>
+                             </div>
+                             <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                               <div 
+                                 className={`h-full rounded-full transition-all duration-500 ${
+                                   isMet ? 'bg-emerald-500' : 'bg-indigo-500'
+                                 }`}
+                                 style={{ width: `${percent}%` }}
+                               />
+                             </div>
+                           </div>
+                         );
+                      })()}
                     </td>
                   )}
 
