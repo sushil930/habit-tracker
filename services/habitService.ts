@@ -1,5 +1,6 @@
 import { Habit } from '../types';
 import { startOfDay, subDays, isSameDay, format, parseISO, differenceInDays } from 'date-fns';
+import { maybeAutoBackup } from './nativeFileService';
 
 const STORAGE_KEY = 'habitflow_data_v1';
 const ONBOARDING_KEY = 'habitflow_onboarded_v1';
@@ -24,6 +25,8 @@ export const loadHabits = (): Habit[] => {
 export const saveHabits = (habits: Habit[]) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    // Desktop only: write a daily auto-backup if enabled.
+    void maybeAutoBackup(habits);
   } catch (e) {
     console.error("Failed to save habits", e);
   }

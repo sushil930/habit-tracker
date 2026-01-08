@@ -70,9 +70,14 @@ const App: React.FC = () => {
   // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('habitflow_theme');
-      if (saved) return saved === 'dark';
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      try {
+        const saved = localStorage.getItem('habitflow_theme');
+        if (saved) return saved === 'dark';
+      } catch {
+        // ignore (some WebViews can block storage)
+      }
+
+      return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false;
     }
     return false;
   });
@@ -87,10 +92,18 @@ const App: React.FC = () => {
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('habitflow_theme', 'dark');
+      try {
+        localStorage.setItem('habitflow_theme', 'dark');
+      } catch {
+        // ignore
+      }
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('habitflow_theme', 'light');
+      try {
+        localStorage.setItem('habitflow_theme', 'light');
+      } catch {
+        // ignore
+      }
     }
   }, [darkMode]);
 

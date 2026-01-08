@@ -1,0 +1,27 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "enables the default permissions",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "fs:default",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$DOCUMENT/*" },
+        { "path": "$DOCUMENT/**/*" },
+        { "path": "$DOWNLOAD/*" },
+        { "path": "$DOWNLOAD/**/*" },
+        { "path": "$DESKTOP/*" },
+        { "path": "$DESKTOP/**/*" },
+        { "path": "$APPDATA/HabitFlow/Backups/*" },
+        { "path": "$APPDATA/HabitFlow/Backups/**/*" }
+      ]
+    },
+    "os:default"
+  ]
+}
