@@ -50,9 +50,9 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
     advance();
   };
 
-  const handleEditComplete = (name: string, category: string, color: string, icon: string, frequency: any) => {
+  const handleEditComplete = (name: string, category: string, color: string, icon: string, frequency: any, reminderTime?: string) => {
     if (editingHabit) {
-      onUpdateHabit(editingHabit.id, { name, category, color, icon, frequency });
+      onUpdateHabit(editingHabit.id, { name, category, color, icon, frequency, reminderTime });
       setEditingHabit(null);
       advance();
     }

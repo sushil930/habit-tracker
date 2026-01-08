@@ -38,9 +38,12 @@ import {
   getMockHabits, 
   clearAllData, 
   validateBackup,
+  calculateStreak,
   hasCompletedOnboarding,
   setOnboardingCompleted
 } from './services/habitService';
+import { useDesktopNotificationScheduler } from './services/desktopNotificationScheduler';
+import { sendHabitNotification } from './services/notificationService';
 import { HabitGrid } from './components/HabitGrid';
 import { StatsView } from './components/StatsView';
 import { SettingsView } from './components/SettingsView';
@@ -145,6 +148,9 @@ const App: React.FC = () => {
     setIsLoading(false);
   }, []);
 
+  // Desktop-only: scheduler while app is running (reminders + missed alerts)
+  useDesktopNotificationScheduler(habits);
+
   // Persistence
   useEffect(() => {
     if (!isLoading) {
@@ -182,19 +188,47 @@ const App: React.FC = () => {
 
   const handleToggleHabit = (habitId: string, date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    setHabits(prev => prev.map(h => {
-      if (h.id !== habitId) return h;
-      const newLogs = { ...h.logs };
-      if (newLogs[dateStr]) {
-        delete newLogs[dateStr];
-      } else {
-        newLogs[dateStr] = true;
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+    let updatedHabit: Habit | null = null;
+    let completionAdded = false;
+
+    setHabits(prev =>
+      prev.map(h => {
+        if (h.id !== habitId) return h;
+        const newLogs = { ...h.logs };
+        if (newLogs[dateStr]) {
+          delete newLogs[dateStr];
+          completionAdded = false;
+        } else {
+          newLogs[dateStr] = true;
+          completionAdded = true;
+        }
+        updatedHabit = { ...h, logs: newLogs };
+        return updatedHabit;
+      })
+    );
+
+    // Desktop-only: streak milestone notifications (only when marking TODAY as done)
+    if (completionAdded && dateStr === todayStr && updatedHabit) {
+      const streak = calculateStreak(updatedHabit);
+      const milestones = [7, 14, 30, 50, 100];
+      if (milestones.includes(streak)) {
+        const key = `habitflow_streak_milestone_v1:${updatedHabit.id}`;
+        try {
+          const last = Number(localStorage.getItem(key) || '0');
+          if (last !== streak) {
+            localStorage.setItem(key, String(streak));
+            void sendHabitNotification('Streak milestone', `${updatedHabit.name}: ${streak} day streak!`);
+          }
+        } catch {
+          void sendHabitNotification('Streak milestone', `${updatedHabit.name}: ${streak} day streak!`);
+        }
       }
-      return { ...h, logs: newLogs };
-    }));
+    }
   };
 
-  const handleAddHabit = (name: string, category: string, color: string, icon: string, frequency: HabitFrequency) => {
+  const handleAddHabit = (name: string, category: string, color: string, icon: string, frequency: HabitFrequency, reminderTime?: string) => {
     const newHabit: Habit = {
       id: crypto.randomUUID(),
       name,
@@ -202,6 +236,7 @@ const App: React.FC = () => {
       color,
       icon,
       frequency,
+      reminderTime,
       createdAt: new Date().toISOString(),
       logs: {},
       archived: false,

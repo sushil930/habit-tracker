@@ -14,18 +14,39 @@
     {
       "identifier": "fs:scope",
       "allow": [
-        { "path": "$HOME/*" },
-        { "path": "$HOME/**/*" },
-        { "path": "$DOCUMENT/*" },
-        { "path": "$DOCUMENT/**/*" },
-        { "path": "$DOWNLOAD/*" },
-        { "path": "$DOWNLOAD/**/*" },
-        { "path": "$DESKTOP/*" },
-        { "path": "$DESKTOP/**/*" },
-        { "path": "$APPDATA/HabitFlow/Backups/*" },
-        { "path": "$APPDATA/HabitFlow/Backups/**/*" }
+        {
+          "path": "$HOME/*"
+        },
+        {
+          "path": "$HOME/**/*"
+        },
+        {
+          "path": "$DOCUMENT/*"
+        },
+        {
+          "path": "$DOCUMENT/**/*"
+        },
+        {
+          "path": "$DOWNLOAD/*"
+        },
+        {
+          "path": "$DOWNLOAD/**/*"
+        },
+        {
+          "path": "$DESKTOP/*"
+        },
+        {
+          "path": "$DESKTOP/**/*"
+        },
+        {
+          "path": "$APPDATA/HabitFlow/Backups/*"
+        },
+        {
+          "path": "$APPDATA/HabitFlow/Backups/**/*"
+        }
       ]
     },
-    "os:default"
+    "os:default",
+    "notification:default"
   ]
 }
