@@ -1,5 +1,6 @@
 import type { Habit } from '../types';
 import { createBackupPayload, parseBackupJson } from './backupService';
+import { isTauri } from '@tauri-apps/api/core';
 
 // Browser fallback export
 function exportInBrowser(filename: string, jsonText: string) {
@@ -10,43 +11,50 @@ function exportInBrowser(filename: string, jsonText: string) {
   linkElement.click();
 }
 
-function isTauriRuntime(): boolean {
-  return typeof window !== 'undefined' && typeof (window as any).__TAURI__ !== 'undefined';
-}
-
-const LAST_EXPORT_PATH_KEY = 'habitflow_last_export_path_v1';
+const LAST_EXPORT_DIR_KEY = 'habitflow_last_export_dir_v1';
 
 export async function exportBackup(habits: Habit[]): Promise<string | void> {
   const filename = `habitflow-backup-${new Date().toISOString().split('T')[0]}.json`;
   const payload = createBackupPayload(habits);
   const jsonText = JSON.stringify(payload, null, 2);
 
-  if (!isTauriRuntime()) {
+  if (!isTauri()) {
     exportInBrowser(filename, jsonText);
     return;
   }
 
   const { save } = await import('@tauri-apps/plugin-dialog');
   const { writeTextFile, mkdir, exists } = await import('@tauri-apps/plugin-fs');
-  const { documentDir, join } = await import('@tauri-apps/api/path');
+  const { documentDir, join, dirname } = await import('@tauri-apps/api/path');
 
-  // If the user already picked a destination before, reuse it.
+  // Check if user has previously chosen a directory
+  let cachedDir: string | null = null;
   try {
-    const lastPath = localStorage.getItem(LAST_EXPORT_PATH_KEY);
-    if (lastPath) {
-      try {
-        await writeTextFile(lastPath, jsonText);
-        return lastPath;
-      } catch (e) {
-        console.warn('Failed to write to cached path:', lastPath, e);
-        // If the stored location is no longer writable/allowed, fall back to prompting again.
-        localStorage.removeItem(LAST_EXPORT_PATH_KEY);
-      }
-    }
+    cachedDir = localStorage.getItem(LAST_EXPORT_DIR_KEY);
   } catch {
-    // If localStorage is unavailable, just prompt.
+    // localStorage unavailable
   }
 
+  // If we have a cached directory, use it directly without prompting
+  if (cachedDir) {
+    try {
+      const dirExists = await exists(cachedDir);
+      if (!dirExists) {
+        await mkdir(cachedDir, { recursive: true });
+      }
+      const fullPath = await join(cachedDir, filename);
+      await writeTextFile(fullPath, jsonText);
+      return fullPath;
+    } catch (e) {
+      console.warn('Failed to write to cached directory:', cachedDir, e);
+      // Clear the cached path and fall through to prompt
+      try {
+        localStorage.removeItem(LAST_EXPORT_DIR_KEY);
+      } catch {}
+    }
+  }
+
+  // No cached directory or it failed - prompt user
   const baseDir = await documentDir();
   const backupDir = await join(baseDir, 'HabitFlow');
 
@@ -69,14 +77,16 @@ export async function exportBackup(habits: Habit[]): Promise<string | void> {
     const message = err instanceof Error ? err.message : String(err);
     if (/not allowed|denied|forbidden/i.test(message)) {
       throw new Error(
-        'Cannot write to the selected location due to Tauri file access permissions. Please choose a folder under Documents, Downloads, or Desktop.'
+        'Cannot write to the selected location due to Tauri file access permissions. Please choose a folder within your User directory (e.g., Documents, Desktop, Downloads).'
       );
     }
     throw err;
   }
 
+  // Save the directory (not the full path) for next time
   try {
-    localStorage.setItem(LAST_EXPORT_PATH_KEY, selectedPath);
+    const selectedDir = await dirname(selectedPath);
+    localStorage.setItem(LAST_EXPORT_DIR_KEY, selectedDir);
   } catch {
     // ignore
   }
@@ -85,7 +95,7 @@ export async function exportBackup(habits: Habit[]): Promise<string | void> {
 }
 
 export async function importBackup(): Promise<Habit[] | null> {
-  if (!isTauriRuntime()) {
+  if (!isTauri()) {
     throw new Error('Browser import is handled via file picker.');
   }
 
