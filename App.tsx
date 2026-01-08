@@ -31,7 +31,7 @@ import {
   parseISO
 } from 'date-fns';
 
-import { Habit, ViewMode, TimeRange } from './types';
+import { Habit, ViewMode, TimeRange, HabitFrequency } from './types';
 import { 
   loadHabits, 
   saveHabits, 
@@ -48,6 +48,8 @@ import { HabitForm } from './components/HabitForm';
 import { Button } from './components/ui/Button';
 import { ConfirmationModal } from './components/ui/ConfirmationModal';
 import { OnboardingTour } from './components/OnboardingTour';
+import { ReviewView } from './components/ReviewView';
+import { isReviewDue } from './services/reviewService';
 
 const App: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -63,6 +65,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
   const [showTour, setShowTour] = useState(false);
+  const [showReviewBanner, setShowReviewBanner] = useState(false);
 
   // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
@@ -73,6 +76,12 @@ const App: React.FC = () => {
     }
     return false;
   });
+  // Check for monthly review
+  useEffect(() => {
+    if (isReviewDue()) {
+      setShowReviewBanner(true);
+    }
+  }, []);
 
   // Apply Dark Mode Class
   useEffect(() => {
@@ -84,6 +93,25 @@ const App: React.FC = () => {
       localStorage.setItem('habitflow_theme', 'light');
     }
   }, [darkMode]);
+
+  // Keyboard navigation for week view
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (viewMode !== 'dashboard' || timeRange !== 'week') return;
+      
+      // Ignore if modal or form is open (simple check)
+      if (isFormOpen || habitToDelete) return;
+
+      if (e.key === 'ArrowLeft') {
+        setCurrentDate(prev => subWeeks(prev, 1));
+      } else if (e.key === 'ArrowRight') {
+        setCurrentDate(prev => addWeeks(prev, 1));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewMode, timeRange, isFormOpen, habitToDelete]);
 
   // Load data on mount
   useEffect(() => {
@@ -110,6 +138,10 @@ const App: React.FC = () => {
       saveHabits(habits);
     }
   }, [habits, isLoading]);
+
+  useEffect(() => {
+    saveHabits(habits);
+  }, [habits]);
 
   const datesToDisplay = useMemo(() => {
     if (timeRange === 'week') {
@@ -149,19 +181,24 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleAddHabit = (name: string, category: string, color: string, icon: string) => {
+  const handleAddHabit = (name: string, category: string, color: string, icon: string, frequency: HabitFrequency) => {
     const newHabit: Habit = {
       id: crypto.randomUUID(),
       name,
       category,
       color,
       icon,
+      frequency,
       createdAt: new Date().toISOString(),
       logs: {},
       archived: false,
     };
     setHabits([...habits, newHabit]);
     setIsFormOpen(false);
+  };
+
+  const handleUpdateHabit = (id: string, updates: Partial<Habit>) => {
+    setHabits(prev => prev.map(h => h.id === id ? { ...h, ...updates } : h));
   };
 
   const handleDeleteHabit = (id: string) => {
@@ -338,6 +375,24 @@ const App: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {viewMode === 'dashboard' ? (
           <div className="space-y-6 animate-in fade-in duration-500">
+            {/* Review Banner */}
+            {showReviewBanner && (
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-4 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-800 rounded-lg">
+                    <CalendarIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-indigo-900 dark:text-indigo-200">Monthly Review Ready</h3>
+                    <p className="text-sm text-indigo-700 dark:text-indigo-300">Reflect on your progress and plan for the month ahead.</p>
+                  </div>
+                </div>
+                <Button onClick={() => setViewMode('review')} size="sm">
+                  Start Review
+                </Button>
+              </div>
+            )}
+
             {/* Header Controls */}
             <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6">
               <div>
@@ -430,6 +485,16 @@ const App: React.FC = () => {
           </div>
         ) : viewMode === 'analytics' ? (
           <StatsView habits={habits} darkMode={darkMode} />
+        ) : viewMode === 'review' ? (
+          <ReviewView 
+            habits={habits} 
+            onClose={() => {
+              setViewMode('dashboard');
+              setShowReviewBanner(false);
+            }}
+            onUpdateHabit={handleUpdateHabit}
+            onArchiveHabit={handleArchiveHabit}
+          />
         ) : (
           <SettingsView 
             onClearData={handleClearData} 

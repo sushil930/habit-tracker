@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Tag, Check, Palette, Sparkles } from 'lucide-react';
 import { Button } from './ui/Button';
-import { Habit } from '../types';
+import { Habit, HabitFrequency } from '../types';
 import { AVAILABLE_ICONS, HabitIcon } from './HabitIcon';
 
 interface HabitFormProps {
-  onSave: (name: string, category: string, color: string, icon: string) => void;
+  onSave: (name: string, category: string, color: string, icon: string, frequency: HabitFrequency) => void;
   onCancel: () => void;
   existingHabits: Habit[];
+  initialData?: Habit;
 }
 
 // Updated to Hex codes matching Tailwind 500 shade
@@ -31,11 +32,13 @@ const PREDEFINED_CATEGORIES = [
   { name: 'Finance', color: '#f59e0b' },
 ];
 
-export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existingHabits }) => {
-  const [name, setName] = useState('');
-  const [categoryName, setCategoryName] = useState('');
-  const [selectedColor, setSelectedColor] = useState(PREDEFINED_CATEGORIES[0].color);
-  const [selectedIcon, setSelectedIcon] = useState('sparkles');
+export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existingHabits, initialData }) => {
+  const [name, setName] = useState(initialData?.name || '');
+  const [categoryName, setCategoryName] = useState(initialData?.category || '');
+  const [selectedColor, setSelectedColor] = useState(initialData?.color || PREDEFINED_CATEGORIES[0].color);
+  const [selectedIcon, setSelectedIcon] = useState(initialData?.icon || 'sparkles');
+  const [frequencyType, setFrequencyType] = useState<'daily' | 'weekly' | 'monthly'>(initialData?.frequency?.type || 'daily');
+  const [frequencyGoal, setFrequencyGoal] = useState(initialData?.frequency?.goal || 1);
 
   // Derive custom categories from existing habits
   const customCategories = useMemo(() => {
@@ -78,7 +81,13 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onSave(name, categoryName.trim() || 'General', selectedColor, selectedIcon);
+    onSave(
+      name,
+      categoryName.trim() || 'General',
+      selectedColor,
+      selectedIcon,
+      { type: frequencyType, goal: frequencyGoal }
+    );
   };
 
   const handleCategorySelect = (catName: string, catColor: string) => {
@@ -87,16 +96,16 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 dark:bg-black/60 backdrop-blur-sm p-4 overflow-y-auto transition-colors">
-      <div id="habit-form-modal" className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-lg border border-slate-100 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50">
-          <h3 className="font-semibold text-slate-900 dark:text-white">Create New Habit</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 dark:bg-black/60 backdrop-blur-sm p-4 transition-colors">
+      <div id="habit-form-modal" className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50 shrink-0">
+          <h3 className="font-semibold text-slate-900 dark:text-white">{initialData ? 'Edit Habit' : 'Create New Habit'}</h3>
           <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Habit Name</label>
             <div className="flex gap-3">
@@ -114,14 +123,16 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Read for 30 mins"
                 autoFocus
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-white dark:bg-slate-950"
+                className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-white dark:bg-slate-950"
               />
             </div>
           </div>
 
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Icon</label>
-            <div className="grid grid-cols-7 sm:grid-cols-9 gap-2 p-3 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-100 dark:border-slate-800 max-h-40 overflow-y-auto custom-scrollbar">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Icon Section */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Icon</label>
+              <div className="grid grid-cols-7 gap-2 p-3 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-100 dark:border-slate-800 max-h-52 overflow-y-auto custom-scrollbar">
               {AVAILABLE_ICONS.map((item) => {
                 const isSelected = selectedIcon === item.name;
                 return (
@@ -143,6 +154,52 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+            {/* Color Section */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Color</label>
+              <div className="flex gap-3 flex-wrap p-3 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-100 dark:border-slate-800 h-full content-start">
+                {COLORS.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => setSelectedColor(color.value)}
+                    className={`w-8 h-8 rounded-full transition-all flex items-center justify-center ${
+                      selectedColor === color.value 
+                        ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110 shadow-sm' 
+                        : 'hover:scale-110 opacity-70 hover:opacity-100'
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                    aria-label={color.label}
+                    title={color.label}
+                  >
+                    {selectedColor === color.value && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+                  </button>
+                ))}
+                
+                <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+                {/* Native Color Picker */}
+                <label 
+                  className={`w-8 h-8 rounded-full cursor-pointer transition-all flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 ${
+                     !COLORS.find(c => c.value === selectedColor)
+                      ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110 shadow-sm' 
+                      : 'hover:scale-110 opacity-90 hover:opacity-100'
+                  }`}
+                  title="Custom Color"
+                >
+                  <input 
+                    type="color" 
+                    value={selectedColor}
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                  />
+                  {!COLORS.find(c => c.value === selectedColor) && <Check className="w-4 h-4 text-white drop-shadow-md" strokeWidth={3} />}
+                  {COLORS.find(c => c.value === selectedColor) && <Palette className="w-4 h-4 text-white" strokeWidth={2.5} />}
+                </label>
+              </div>
             </div>
           </div>
 
@@ -199,62 +256,57 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
                       </button>
                     ))}
                   </div>
+          {/* Frequency Section */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Goal & Frequency</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <select
+                  value={frequencyType}
+                  onChange={(e) => {
+                    const newType = e.target.value as any;
+                    setFrequencyType(newType);
+                    // Reset goal defaults
+                    if (newType === 'daily') setFrequencyGoal(1);
+                    if (newType === 'weekly') setFrequencyGoal(3);
+                    if (newType === 'monthly') setFrequencyGoal(10);
+                  }}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 dark:text-white bg-white dark:bg-slate-950"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max={frequencyType === 'weekly' ? 7 : frequencyType === 'monthly' ? 31 : 1}
+                  value={frequencyGoal}
+                  onChange={(e) => setFrequencyGoal(parseInt(e.target.value) || 1)}
+                  disabled={frequencyType === 'daily'}
+                  className="w-20 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 dark:text-white bg-white dark:bg-slate-950 disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900"
+                />
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  {frequencyType === 'daily' ? 'time / day' : frequencyType === 'weekly' ? 'days / week' : 'days / month'}
+                </span>
+              </div>
+            </div>
+          </div>
+
                 </div>
               )}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Color</label>
-            <div className="flex gap-3 flex-wrap p-3 bg-slate-50 dark:bg-slate-950/50 rounded-lg border border-slate-100 dark:border-slate-800">
-              {COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  type="button"
-                  onClick={() => setSelectedColor(color.value)}
-                  className={`w-6 h-6 rounded-full transition-all flex items-center justify-center ${
-                    selectedColor === color.value 
-                      ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110 shadow-sm' 
-                      : 'hover:scale-110 opacity-70 hover:opacity-100'
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                  aria-label={color.label}
-                  title={color.label}
-                >
-                  {selectedColor === color.value && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-                </button>
-              ))}
-              
-              <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
-
-              {/* Native Color Picker */}
-              <label 
-                className={`w-6 h-6 rounded-full cursor-pointer transition-all flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 ${
-                   !COLORS.find(c => c.value === selectedColor)
-                    ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110 shadow-sm' 
-                    : 'hover:scale-110 opacity-90 hover:opacity-100'
-                }`}
-                title="Custom Color"
-              >
-                <input 
-                  type="color" 
-                  value={selectedColor}
-                  onChange={(e) => setSelectedColor(e.target.value)}
-                  className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                />
-                {!COLORS.find(c => c.value === selectedColor) && <Check className="w-3 h-3 text-white drop-shadow-md" strokeWidth={3} />}
-                {COLORS.find(c => c.value === selectedColor) && <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />}
-              </label>
-
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <Button type="button" variant="secondary" onClick={onCancel}>
               Cancel
             </Button>
             <Button id="habit-submit-btn" type="submit" disabled={!name.trim()}>
-              Create Habit
+              {initialData ? 'Save Changes' : 'Create Habit'}
             </Button>
           </div>
         </form>

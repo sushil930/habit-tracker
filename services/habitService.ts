@@ -1,5 +1,5 @@
 import { Habit } from '../types';
-import { startOfDay, subDays, isSameDay, format, parseISO } from 'date-fns';
+import { startOfDay, subDays, isSameDay, format, parseISO, differenceInDays } from 'date-fns';
 
 const STORAGE_KEY = 'habitflow_data_v1';
 const ONBOARDING_KEY = 'habitflow_onboarded_v1';
@@ -9,10 +9,11 @@ export const loadHabits = (): Habit[] => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return [];
     const parsed = JSON.parse(saved);
-    // Migration: ensure category exists
+    // Migration: ensure category and frequency exist
     return parsed.map((h: any) => ({
       ...h,
       category: h.category || 'General',
+      frequency: h.frequency || { type: 'daily', goal: 1 },
     }));
   } catch (e) {
     console.error("Failed to load habits", e);
@@ -69,20 +70,18 @@ export const validateBackup = (data: any): data is Habit[] => {
 export const calculateStreak = (habit: Habit): number => {
   let streak = 0;
   const today = startOfDay(new Date());
+  const yesterday = subDays(today, 1);
   
-  // Check if completed today, if so start from today, else start from yesterday
   const todayStr = format(today, 'yyyy-MM-dd');
-  const yesterdayStr = format(subDays(today, 1), 'yyyy-MM-dd');
+  const yesterdayStr = format(yesterday, 'yyyy-MM-dd');
   
-  let currentCheckDate = today;
-  
+  // If not completed today AND not completed yesterday, streak is broken
   if (!habit.logs[todayStr] && !habit.logs[yesterdayStr]) {
     return 0;
   }
   
-  if (!habit.logs[todayStr] && habit.logs[yesterdayStr]) {
-    currentCheckDate = subDays(today, 1);
-  }
+  // Start checking from today if completed today, otherwise start from yesterday
+  let currentCheckDate = habit.logs[todayStr] ? today : yesterday;
 
   // Iterate backwards
   while (true) {
@@ -96,6 +95,39 @@ export const calculateStreak = (habit: Habit): number => {
   }
   
   return streak;
+};
+
+export const calculateLongestStreak = (habit: Habit): number => {
+  const dates = Object.keys(habit.logs).sort();
+  if (dates.length === 0) return 0;
+
+  let maxStreak = 0;
+  let currentStreak = 0;
+  let prevDate: Date | null = null;
+
+  for (const dateStr of dates) {
+    const currentDate = parseISO(dateStr);
+    
+    if (!prevDate) {
+      currentStreak = 1;
+      maxStreak = 1;
+    } else {
+      const diff = differenceInDays(currentDate, prevDate);
+      if (diff === 1) {
+        currentStreak++;
+      } else if (diff > 1) {
+        currentStreak = 1;
+      }
+      // if diff === 0 (duplicate), ignore
+    }
+    
+    if (currentStreak > maxStreak) {
+      maxStreak = currentStreak;
+    }
+    prevDate = currentDate;
+  }
+  
+  return maxStreak;
 };
 
 export const calculateCompletionRate = (habit: Habit, days = 30): number => {
