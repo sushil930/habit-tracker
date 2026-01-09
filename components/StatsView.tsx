@@ -7,16 +7,50 @@ import {
   LineChart, Line, PieChart, Pie, Legend, Area, AreaChart
 } from 'recharts';
 import { format, subDays, startOfDay, getDay, parseISO, eachDayOfInterval, startOfWeek, addDays, isAfter, subWeeks, addWeeks, subMonths, addMonths, endOfMonth, startOfMonth } from 'date-fns';
-import { TrendingUp, Calendar, PieChart as PieChartIcon, Activity, Zap, Lightbulb, X, RefreshCw, Target } from 'lucide-react';
+import { TrendingUp, Calendar, PieChart as PieChartIcon, Activity, Zap, Lightbulb, X, RefreshCw, Target, Plus, BarChart2 } from 'lucide-react';
+import { EmptyState } from './EmptyState';
 
 interface StatsViewProps {
   habits: Habit[];
   darkMode?: boolean;
+  onAddHabit?: () => void;
 }
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#0ea5e9', '#64748b'];
 
-export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false }) => {
+export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, onAddHabit }) => {
+
+  // Empty state check
+  const activeHabits = habits.filter(h => !h.archived);
+  const hasAnyData = habits.some(h => Object.keys(h.logs).length > 0);
+
+  if (activeHabits.length === 0) {
+    return (
+      <EmptyState
+        icon={BarChart2}
+        title="No Active Habits Yet"
+        description="Start tracking habits to see detailed statistics, insights, and visualizations of your progress over time."
+        action={onAddHabit ? {
+          label: "Create Your First Habit",
+          onClick: onAddHabit
+        } : undefined}
+      />
+    );
+  }
+
+  if (!hasAnyData) {
+    return (
+      <EmptyState
+        icon={Activity}
+        title="No Data to Analyze"
+        description="Complete some habits to start generating statistics. Your journey begins with your first check!"
+        action={{
+          label: "Go to Dashboard",
+          onClick: () => window.history.back()
+        }}
+      />
+    );
+  }
 
   // Insights State (1-2 per page load, dismiss/regenerate, monthly history)
   const INSIGHT_HISTORY_KEY = 'habitflow_insights_history_v1';

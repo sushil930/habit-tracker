@@ -3,8 +3,8 @@ import { format, isSameDay, startOfDay, getDay, isAfter, getWeek, subWeeks, addW
 import { Habit, TimeRange } from '../types';
 import { Check, Flame, Trash2, Sparkles, Archive, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { calculateStreak } from '../services/habitService';
-import fireGif from '../src/assets/icons8-fire.gif';
 import { HabitIcon } from './HabitIcon';
+import { FireAnimation } from './FireAnimation';
 
 interface HabitGridProps {
   habits: Habit[];
@@ -64,7 +64,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
     return (
       <div className="flex items-center justify-center gap-1 transition-all duration-300 group/streak" title={`${streak} day streak`}>
         {streak > 0 ? (
-          <img src={fireGif} alt="Streak" className={`${iconClass.includes('w-5') ? 'w-5 h-5' : 'w-4 h-4'} object-contain transition-all duration-500`} />
+          <FireAnimation className={`${iconClass.includes('w-5') ? 'w-5 h-5' : 'w-4 h-4'}`} />
         ) : (
           <Flame className={`${iconClass} transition-all duration-500`} />
         )}
@@ -134,7 +134,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
           
           {/* Main Icon Circle */}
           <div className="relative bg-white dark:bg-slate-800 w-24 h-24 rounded-full flex items-center justify-center shadow-xl shadow-indigo-100 dark:shadow-none border border-indigo-50 dark:border-slate-700">
-            <img src={fireGif} alt="Flame" className="w-12 h-12 object-contain" />
+            <FireAnimation className="w-12 h-12" />
           </div>
 
           {/* Floating Badge */}
@@ -343,7 +343,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                         <p className="font-medium text-slate-900 dark:text-slate-200 whitespace-nowrap">{habit.name}</p>
                         {streak > 3 && (
                           <p className="text-xs text-orange-500 flex items-center gap-1">
-                            <img src={fireGif} alt="Flame" className="w-3 h-3 object-contain" /> On fire!
+                            <FireAnimation className="w-3 h-3" /> On fire!
                           </p>
                         )}
                       </div>

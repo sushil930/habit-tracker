@@ -47,6 +47,7 @@
       ]
     },
     "os:default",
-    "notification:default"
+    "notification:default",
+    "autostart:default"
   ]
 }

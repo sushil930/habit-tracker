@@ -53,6 +53,8 @@ import { ConfirmationModal } from './components/ui/ConfirmationModal';
 import { OnboardingTour } from './components/OnboardingTour';
 import { ReviewView } from './components/ReviewView';
 import { isReviewDue } from './services/reviewService';
+import { isTauri } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 
 const App: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -146,6 +148,25 @@ const App: React.FC = () => {
     }
 
     setIsLoading(false);
+  }, []);
+
+  // Tray: "Add Habit" -> open modal
+  useEffect(() => {
+    if (!isTauri()) return;
+    let unlisten: (() => void) | null = null;
+    void (async () => {
+      unlisten = await listen('tray:add-habit', () => {
+        setViewMode('dashboard');
+        setIsFormOpen(true);
+      });
+    })();
+    return () => {
+      try {
+        unlisten?.();
+      } catch {
+        // ignore
+      }
+    };
   }, []);
 
   // Desktop-only: scheduler while app is running (reminders + missed alerts)
@@ -532,7 +553,10 @@ const App: React.FC = () => {
             </div>
           </div>
         ) : viewMode === 'analytics' ? (
-          <StatsView habits={habits} darkMode={darkMode} />
+          <StatsView habits={habits} darkMode={darkMode} onAddHabit={() => {
+            setViewMode('dashboard');
+            setIsFormOpen(true);
+          }} />
         ) : viewMode === 'review' ? (
           <ReviewView 
             habits={habits} 
@@ -542,6 +566,7 @@ const App: React.FC = () => {
             }}
             onUpdateHabit={handleUpdateHabit}
             onArchiveHabit={handleArchiveHabit}
+            onAddHabit={() => setIsFormOpen(true)}
           />
         ) : (
           <SettingsView 

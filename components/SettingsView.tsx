@@ -1,10 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Database, Trash2, Download, Upload, FileJson, Archive, RefreshCw, Layers } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Habit } from '../types';
 import { HabitIcon } from './HabitIcon';
 import { exportBackup, importBackup, isAutoBackupEnabled, setAutoBackupEnabled } from '../services/nativeFileService';
 import { parseBackupJson } from '../services/backupService';
+import { isAutostartEnabled, setAutostartEnabled } from '../services/startupService';
 
 interface SettingsViewProps {
   onClearData: () => void;
@@ -18,6 +19,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
   const fileInputRef = useRef<HTMLInputElement>(null);
   const archivedHabits = habits.filter(h => h.archived);
   const [autoBackupEnabled, setAutoBackupEnabledState] = useState<boolean>(() => isAutoBackupEnabled());
+  const [runOnStartupEnabled, setRunOnStartupEnabledState] = useState<boolean>(false);
+
+  useEffect(() => {
+    void (async () => {
+      setRunOnStartupEnabledState(await isAutostartEnabled());
+    })();
+  }, []);
 
   const handleExport = async () => {
     try {
@@ -101,6 +109,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
                   }}
                 />
                 Enable auto-backup (desktop only)
+              </label>
+              <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={runOnStartupEnabled}
+                  onChange={(e) => {
+                    const enabled = e.target.checked;
+                    setRunOnStartupEnabledState(enabled);
+                    void setAutostartEnabled(enabled);
+                  }}
+                />
+                Run on system startup (desktop only)
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex flex-col justify-between gap-4">
