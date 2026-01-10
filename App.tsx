@@ -72,6 +72,18 @@ const App: React.FC = () => {
   const [showTour, setShowTour] = useState(false);
   const [showReviewBanner, setShowReviewBanner] = useState(false);
 
+  const hasMonthOfUsage = useMemo(() => {
+    if (!habits.length) return false;
+    const earliest = habits.reduce<Date | null>((acc, h) => {
+      const created = parseISO(h.createdAt);
+      if (!isValid(created)) return acc;
+      if (!acc) return created;
+      return created < acc ? created : acc;
+    }, null);
+    if (!earliest) return false;
+    return differenceInDays(new Date(), earliest) >= 30;
+  }, [habits]);
+
   // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -88,10 +100,12 @@ const App: React.FC = () => {
   });
   // Check for monthly review
   useEffect(() => {
-    if (isReviewDue()) {
+    if (isReviewDue() && hasMonthOfUsage) {
       setShowReviewBanner(true);
+    } else {
+      setShowReviewBanner(false);
     }
-  }, []);
+  }, [hasMonthOfUsage]);
 
   // Apply Dark Mode Class
   useEffect(() => {
