@@ -7,6 +7,13 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       base: './',
+      // Pre-bundle some problematic deps to avoid runtime load-order issues
+      optimizeDeps: {
+        include: ['lucide-react', 'lottie-web']
+      },
+      ssr: {
+        noExternal: ['lucide-react']
+      },
       server: {
         port: 3000,
         host: '127.0.0.1',
@@ -48,16 +55,13 @@ export default defineConfig(({ mode }) => {
             manualChunks(id) {
               if (!id.includes('node_modules')) return;
 
-              if (id.includes('react-dom') || id.includes('react')) {
+              // Only chunk react, charts, and date-fns. Let lucide-react bundle with vendor.
+              if (id.includes('react-dom') || id.includes('react/') || id.includes('/react/')) {
                 return 'react-vendor';
               }
 
               if (id.includes('recharts') || id.includes('/d3-')) {
                 return 'charts';
-              }
-
-              if (id.includes('lucide-react')) {
-                return 'icons';
               }
 
               if (id.includes('date-fns')) {

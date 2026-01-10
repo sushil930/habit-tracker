@@ -139,7 +139,7 @@ export function setAutoBackupEnabled(enabled: boolean) {
 }
 
 export async function maybeAutoBackup(habits: Habit[]): Promise<void> {
-  if (!isTauriRuntime()) return;
+  if (!isTauri()) return;
   if (!isAutoBackupEnabled()) return;
 
   const now = new Date();

@@ -66,6 +66,13 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            // Open DevTools in release builds for debugging white screen
+            // TODO: Remove this before final release
+            if let Some(window) = app.get_webview_window("main") {
+                window.open_devtools();
+            }
+
             Ok(())
         })
         // Close button => minimize to tray (hide) unless quitting.
