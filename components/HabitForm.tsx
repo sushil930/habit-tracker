@@ -5,7 +5,7 @@ import { Habit, HabitFrequency } from '../types';
 import { AVAILABLE_ICONS, HabitIcon } from './HabitIcon';
 
 interface HabitFormProps {
-  onSave: (name: string, category: string, color: string, icon: string, frequency: HabitFrequency) => void;
+  onSave: (name: string, category: string, color: string, icon: string, frequency: HabitFrequency, reminderTime?: string) => void;
   onCancel: () => void;
   existingHabits: Habit[];
   initialData?: Habit;
@@ -39,6 +39,7 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
   const [selectedIcon, setSelectedIcon] = useState(initialData?.icon || 'sparkles');
   const [frequencyType, setFrequencyType] = useState<'daily' | 'weekly' | 'monthly'>(initialData?.frequency?.type || 'daily');
   const [frequencyGoal, setFrequencyGoal] = useState(initialData?.frequency?.goal || 1);
+  const [reminderTime, setReminderTime] = useState(initialData?.reminderTime || '');
 
   // Derive custom categories from existing habits
   const customCategories = useMemo(() => {
@@ -86,7 +87,8 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
       categoryName.trim() || 'General',
       selectedColor,
       selectedIcon,
-      { type: frequencyType, goal: frequencyGoal }
+      { type: frequencyType, goal: frequencyGoal },
+      reminderTime.trim() ? reminderTime.trim() : undefined
     );
   };
 
@@ -294,6 +296,18 @@ export const HabitForm: React.FC<HabitFormProps> = ({ onSave, onCancel, existing
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Reminder Section */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Reminder Time (optional)</label>
+            <input
+              type="time"
+              value={reminderTime}
+              onChange={(e) => setReminderTime(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 dark:text-white bg-white dark:bg-slate-950"
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400">Desktop only. You’ll get a system notification if it’s not done yet.</p>
           </div>
 
                 </div>

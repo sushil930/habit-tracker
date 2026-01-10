@@ -1,8 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Database, Trash2, Download, Upload, FileJson, Archive, RefreshCw, Layers } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Habit } from '../types';
 import { HabitIcon } from './HabitIcon';
+import { exportBackup, importBackup, isAutoBackupEnabled, setAutoBackupEnabled } from '../services/nativeFileService';
+import { parseBackupJson } from '../services/backupService';
+import { isAutostartEnabled, setAutostartEnabled } from '../services/startupService';
 
 interface SettingsViewProps {
   onClearData: () => void;
@@ -15,20 +18,38 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImportData, habits, onRestore, onDelete }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const archivedHabits = habits.filter(h => h.archived);
+  const [autoBackupEnabled, setAutoBackupEnabledState] = useState<boolean>(() => isAutoBackupEnabled());
+  const [runOnStartupEnabled, setRunOnStartupEnabledState] = useState<boolean>(false);
 
-  const handleExport = () => {
-    const dataStr = JSON.stringify(habits, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `habitflow-backup-${new Date().toISOString().split('T')[0]}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+  useEffect(() => {
+    void (async () => {
+      setRunOnStartupEnabledState(await isAutostartEnabled());
+    })();
+  }, []);
+
+  const handleExport = async () => {
+    try {
+      const savedPath = await exportBackup(habits);
+      if (savedPath) {
+        alert(`Backup successfully saved to:\n${savedPath}`);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to export backup.');
+    }
   };
 
-  const handleImportClick = () => {
+  const handleImportClick = async () => {
+    // If running in Tauri, use native dialog; otherwise fall back to browser file input.
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      try {
+        const imported = await importBackup();
+        if (imported) onImportData(imported);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Failed to import backup.');
+      }
+      return;
+    }
+
     fileInputRef.current?.click();
   };
 
@@ -39,10 +60,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const parsed = JSON.parse(event.target?.result as string);
-        onImportData(parsed);
+        const habitsFromBackup = parseBackupJson(event.target?.result as string);
+        onImportData(habitsFromBackup);
       } catch (err) {
-        alert('Failed to parse the backup file. Please ensure it is a valid JSON file.');
+        alert(err instanceof Error ? err.message : 'Failed to parse the backup file. Please ensure it is a valid JSON file.');
       }
     };
     reader.readAsText(file);
@@ -78,6 +99,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
                 <FileJson className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                 Backup & Restore
               </h4>
+              <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={autoBackupEnabled}
+                  onChange={(e) => {
+                    setAutoBackupEnabledState(e.target.checked);
+                    setAutoBackupEnabled(e.target.checked);
+                  }}
+                />
+                Enable auto-backup (desktop only)
+              </label>
+              <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={runOnStartupEnabled}
+                  onChange={(e) => {
+                    const enabled = e.target.checked;
+                    setRunOnStartupEnabledState(enabled);
+                    void setAutostartEnabled(enabled);
+                  }}
+                />
+                Run on system startup (desktop only)
+              </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex flex-col justify-between gap-4">
                   <div>

@@ -1,21 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Habit, ReviewItem, ReviewDecision } from '../types';
 import { generateReviewSummary, saveReview, getPreviousMonthPeriod } from '../services/reviewService';
-import { ArrowRight, Check, X, Edit2, Archive, Trophy, TrendingDown, Target, Calendar } from 'lucide-react';
+import { ArrowRight, Check, X, Edit2, Archive, Trophy, TrendingDown, Target, Calendar, Plus } from 'lucide-react';
 import { Button } from './ui/Button';
 import { HabitIcon } from './HabitIcon';
 import { HabitForm } from './HabitForm';
+import { EmptyState } from './EmptyState';
 
 interface ReviewViewProps {
   habits: Habit[];
   onClose: () => void;
   onUpdateHabit: (id: string, updates: Partial<Habit>) => void;
   onArchiveHabit: (id: string) => void;
+  onAddHabit?: () => void;
 }
 
 type Step = 'intro' | 'summary' | 'review' | 'complete';
 
-export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdateHabit, onArchiveHabit }) => {
+export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdateHabit, onArchiveHabit, onAddHabit }) => {
   const [step, setStep] = useState<Step>('intro');
   const [currentHabitIndex, setCurrentHabitIndex] = useState(0);
   const [decisions, setDecisions] = useState<ReviewItem[]>([]);
@@ -29,6 +31,28 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
     // For now, review all active habits
     return habits.filter(h => !h.archived);
   }, [habits]);
+
+  // Empty state check
+  if (reviewableHabits.length === 0) {
+    return (
+      <EmptyState
+        icon={Calendar}
+        title="No Habits to Review"
+        description="Create and track some habits first, then come back here for your monthly reflection and adjustment session."
+        action={onAddHabit ? {
+          label: "Create Your First Habit",
+          onClick: () => {
+            onClose();
+            onAddHabit();
+          }
+        } : undefined}
+        secondaryAction={{
+          label: "Back to Dashboard",
+          onClick: onClose
+        }}
+      />
+    );
+  }
 
   const currentHabit = reviewableHabits[currentHabitIndex];
 
@@ -50,9 +74,9 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
     advance();
   };
 
-  const handleEditComplete = (name: string, category: string, color: string, icon: string, frequency: any) => {
+  const handleEditComplete = (name: string, category: string, color: string, icon: string, frequency: any, reminderTime?: string) => {
     if (editingHabit) {
-      onUpdateHabit(editingHabit.id, { name, category, color, icon, frequency });
+      onUpdateHabit(editingHabit.id, { name, category, color, icon, frequency, reminderTime });
       setEditingHabit(null);
       advance();
     }

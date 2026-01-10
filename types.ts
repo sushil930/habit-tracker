@@ -15,6 +15,7 @@ export interface Habit {
   icon?: string;
   category: string;
   frequency: HabitFrequency;
+  reminderTime?: string; // "HH:MM" 24h format
   createdAt: string; // ISO Date string
   logs: HabitLog;
   archived: boolean;

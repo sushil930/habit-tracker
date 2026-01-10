@@ -22,3 +22,28 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Tauri build output
+src-tauri/target/
+src-tauri/.cargo/
+src-tauri/Cargo.lock
+src-tauri/.tauri-build
+
+# Windows/macOS/Linux executables
+*.exe
+*.app
+*.dmg
+*.deb
+*.rpm
+*.msi
+*.pkg
+*.snap
+
+# Vite cache
+node_modules/.vite
+
+# Local backup/test files
+habitflow-backup-*.json
+
+# Env files
+.env*
