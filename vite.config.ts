@@ -6,6 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      base: './',
       server: {
         port: 3000,
         host: '127.0.0.1',
@@ -14,17 +15,20 @@ export default defineConfig(({ mode }) => {
       plugins: [
         react(),
         VitePWA({
-          injectRegister: 'auto',
+          // Tauri desktop apps don't need a Service Worker and it can cause
+          // confusing blank-screen failures if caching/pathing goes wrong.
+          // We'll register SW manually for web-only in index.tsx.
+          injectRegister: null,
           registerType: 'autoUpdate',
           includeAssets: ['favicon.svg'],
           manifest: {
             name: 'HabitFlow',
             short_name: 'HabitFlow',
-            start_url: '/',
+            start_url: './',
             display: 'standalone',
           },
           workbox: {
-            navigateFallback: '/index.html',
+            navigateFallback: './index.html',
             globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,json}'],
           },
         }),
