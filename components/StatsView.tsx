@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Habit } from '../types';
 import { calculateCompletionRate, calculateLongestStreak } from '../services/habitService';
-import { generateInsights, generateAIInsights, Insight } from '../services/insightService';
+
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, 
   LineChart, Line, PieChart, Pie, Legend, Area, AreaChart
@@ -52,175 +52,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
     );
   }
 
-  // Insights State (1-2 per page load, dismiss/regenerate, monthly history)
-  const INSIGHT_HISTORY_KEY = 'habitflow_insights_history_v1';
-  type InsightLogEntry = {
-    ts: string;
-    insights: Array<Pick<Insight, 'id' | 'type' | 'title' | 'description' | 'habitId'>>;
-  };
 
-  const [insights, setInsights] = useState<Insight[]>([]);
-  const [selectedInsightIds, setSelectedInsightIds] = useState<string[]>([]);
-  const [dismissedInsightIds, setDismissedInsightIds] = useState<string[]>([]);
-  const [showInsightHistory, setShowInsightHistory] = useState(false);
-  const [monthlyInsightHistory, setMonthlyInsightHistory] = useState<InsightLogEntry[]>([]);
-  const hasGeneratedInsightsRef = useRef(false);
-
-
-  // Multi-AI support
-  const AI_PROVIDERS = [
-    { id: 'openai', name: 'OpenAI', keyLabel: 'OpenAI API Key', placeholder: 'sk-...' },
-    { id: 'gemini', name: 'Gemini', keyLabel: 'Gemini API Key', placeholder: '...' },
-    { id: 'claude', name: 'Claude', keyLabel: 'Claude API Key', placeholder: '...' },
-    { id: 'deepseek', name: 'DeepSeek', keyLabel: 'DeepSeek API Key', placeholder: '...' },
-    { id: 'qwen', name: 'Qwen', keyLabel: 'Qwen API Key', placeholder: '...' },
-  ];
-  const [aiProvider, setAiProvider] = useState('openai');
-  const [apiKey, setApiKey] = useState('');
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
-
-  useEffect(() => {
-    const storedProvider = localStorage.getItem('habitflow_ai_provider') || 'openai';
-    setAiProvider(storedProvider);
-    const storedKey = localStorage.getItem(`habitflow_${storedProvider}_key`);
-    if (storedKey) setApiKey(storedKey);
-  }, []);
-
-  useEffect(() => {
-    const storedKey = localStorage.getItem(`habitflow_${aiProvider}_key`);
-    setApiKey(storedKey || '');
-  }, [aiProvider]);
-
-  const handleSaveApiKey = (key: string) => {
-    setApiKey(key);
-    localStorage.setItem(`habitflow_${aiProvider}_key`, key);
-    setShowApiKeyInput(false);
-  };
-
-  const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setAiProvider(e.target.value);
-    localStorage.setItem('habitflow_ai_provider', e.target.value);
-  };
-
-  const handleGenerateAIInsights = async () => {
-    if (!apiKey) {
-      setShowApiKeyInput(true);
-      return;
-    }
-    setIsAiLoading(true);
-    setAiError(null);
-    try {
-      const aiInsights = await generateAIInsights(apiKey, habits, aiProvider);
-      setInsights(aiInsights);
-      setSelectedInsightIds(aiInsights.map(i => i.id));
-      // Update history
-      const newEntry: InsightLogEntry = { 
-        ts: new Date().toISOString(), 
-        insights: aiInsights.map(i => ({
-          id: i.id,
-          type: i.type,
-          title: i.title,
-          description: i.description,
-          habitId: i.habitId
-        }))
-      };
-      const raw = localStorage.getItem(INSIGHT_HISTORY_KEY);
-      const parsed = raw ? (JSON.parse(raw) as Record<string, InsightLogEntry[]>) : {};
-      const existing = Array.isArray(parsed[monthKey]) ? parsed[monthKey] : [];
-      const next = [newEntry, ...existing].slice(0, 50);
-      parsed[monthKey] = next;
-      localStorage.setItem(INSIGHT_HISTORY_KEY, JSON.stringify(parsed));
-      setMonthlyInsightHistory(next);
-    } catch (err: any) {
-      setAiError(err.message || 'Failed to generate AI insights.');
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  const monthKey = useMemo(() => format(new Date(), 'yyyy-MM'), []);
-
-  const loadMonthlyHistory = () => {
-    try {
-      const raw = localStorage.getItem(INSIGHT_HISTORY_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw) as Record<string, InsightLogEntry[]>;
-      const entries = parsed[monthKey] || [];
-      return Array.isArray(entries) ? entries : [];
-    } catch {
-      return [];
-    }
-  };
-
-  const appendMonthlyHistory = (entry: InsightLogEntry) => {
-    try {
-      const raw = localStorage.getItem(INSIGHT_HISTORY_KEY);
-      const parsed = raw ? (JSON.parse(raw) as Record<string, InsightLogEntry[]>) : {};
-      const existing = Array.isArray(parsed[monthKey]) ? parsed[monthKey] : [];
-      const next = [entry, ...existing].slice(0, 50);
-      parsed[monthKey] = next;
-      localStorage.setItem(INSIGHT_HISTORY_KEY, JSON.stringify(parsed));
-      setMonthlyInsightHistory(next);
-    } catch {
-      // Ignore storage failures
-    }
-  };
-
-  const pickInsightIds = (all: Insight[]) => {
-    const pool = all.slice(0, Math.min(6, all.length));
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 2).map(i => i.id);
-  };
-
-  const generateInsightSession = () => {
-    const generated = generateInsights(habits);
-    setInsights(generated);
-    setDismissedInsightIds([]);
-
-    const pickedIds = pickInsightIds(generated);
-    setSelectedInsightIds(pickedIds);
-
-    const pickedInsights = generated
-      .filter(i => pickedIds.includes(i.id))
-      .map(i => ({ id: i.id, type: i.type, title: i.title, description: i.description, habitId: i.habitId }));
-
-    if (pickedInsights.length > 0) {
-      appendMonthlyHistory({ ts: new Date().toISOString(), insights: pickedInsights });
-    }
-  };
-
-  useEffect(() => {
-    if (hasGeneratedInsightsRef.current) return;
-    if (habits.length === 0) return;
-    hasGeneratedInsightsRef.current = true;
-    setMonthlyInsightHistory(loadMonthlyHistory());
-    generateInsightSession();
-  }, [habits]);
-
-  useEffect(() => {
-    if (!showInsightHistory) return;
-    setMonthlyInsightHistory(loadMonthlyHistory());
-  }, [showInsightHistory]);
-
-  const handleDismissInsight = (id: string) => {
-    setDismissedInsightIds(prev => (prev.includes(id) ? prev : [...prev, id]));
-  };
-
-  const handleRegenerateInsights = () => {
-    generateInsightSession();
-  };
-
-  const visibleInsights = useMemo(() => {
-    const candidates = selectedInsightIds.length > 0
-      ? insights.filter(i => selectedInsightIds.includes(i.id))
-      : insights;
-
-    return candidates
-      .filter(i => !dismissedInsightIds.includes(i.id))
-      .slice(0, 2);
-  }, [insights, selectedInsightIds, dismissedInsightIds]);
 
   // 1. Total Stats Calculation
   const { totalCompletions, avgSuccessRate, totalActive, bestStreak } = useMemo(() => {
@@ -418,7 +250,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-slate-800 p-3 border border-slate-100 dark:border-slate-700 shadow-xl rounded-lg text-xs">
+        <div className="glass-panel p-3 shadow-xl rounded-lg text-xs">
           <p className="font-semibold text-slate-900 dark:text-slate-200 mb-1">{label}</p>
           <p className="text-indigo-600 dark:text-indigo-400 font-medium">
             {payload[0].name === 'rate' ? `${payload[0].value}% Success` : `${payload[0].value} Completions`}
@@ -460,172 +292,48 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
 
-      {/* Insights Section */}
-      {(visibleInsights.length > 0 || showApiKeyInput || isAiLoading || aiError) && (
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
-                <Lightbulb size={18} />
-              </div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">AI Insights</h3>
-              <span className="text-xs text-slate-400 dark:text-slate-500">({monthKey})</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <select
-                value={aiProvider}
-                onChange={handleProviderChange}
-                className="text-xs font-medium border border-slate-200 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                style={{ minWidth: 90 }}
-                disabled={isAiLoading}
-              >
-                {AI_PROVIDERS.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-              <button
-                onClick={handleGenerateAIInsights}
-                disabled={isAiLoading}
-                className="flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50"
-                title="Generate AI insights"
-              >
-                <RefreshCw size={12} className={isAiLoading ? "animate-spin" : ""} />
-                {isAiLoading ? 'Generating...' : 'Generate AI'}
-              </button>
-              <button
-                onClick={() => setShowApiKeyInput(v => !v)}
-                className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:underline"
-                title="Configure API Key"
-              >
-                Settings
-              </button>
-            </div>
-          </div>
 
-          {showApiKeyInput && (
-            <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {AI_PROVIDERS.find(p => p.id === aiProvider)?.keyLabel}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={AI_PROVIDERS.find(p => p.id === aiProvider)?.placeholder}
-                  className="flex-1 text-xs p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-                <button
-                  onClick={() => handleSaveApiKey(apiKey)}
-                  className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700"
-                >
-                  Save
-                </button>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">Key is stored locally in your browser.</p>
-            </div>
-          )}
-
-          {aiError && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs rounded-lg">
-              {aiError}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {visibleInsights.map(insight => (
-              <div
-                key={insight.id}
-                className={`p-4 rounded-xl border relative overflow-hidden group ${
-                  insight.type === 'warning' ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' :
-                  insight.type === 'success' ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' :
-                  'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-800'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg shrink-0 ${
-                    insight.type === 'warning' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400' :
-                    insight.type === 'success' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400' :
-                    'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400'
-                  }`}>
-                    <Lightbulb size={18} />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className={`font-semibold text-sm mb-1 ${
-                      insight.type === 'warning' ? 'text-amber-900 dark:text-amber-200' :
-                      insight.type === 'success' ? 'text-emerald-900 dark:text-emerald-200' :
-                      'text-indigo-900 dark:text-indigo-200'
-                    }`}>
-                      {insight.title}
-                    </h4>
-                    <p className={`text-xs leading-relaxed ${
-                      insight.type === 'warning' ? 'text-amber-700 dark:text-amber-300' :
-                      insight.type === 'success' ? 'text-emerald-700 dark:text-emerald-300' :
-                      'text-indigo-700 dark:text-indigo-300'
-                    }`}>
-                      {insight.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
       {/* Top Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-32 relative overflow-hidden group transition-colors">
-          <div className="relative z-10">
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Habits</p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{totalActive}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-sm border border-white/20 dark:border-white/10">
+          <div className="flex items-center gap-2 mb-4 opacity-70">
+            <Activity size={16} className="text-indigo-500" />
+            <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Active Habits</p>
           </div>
-          <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Activity size={64} className="text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <div className="h-1 w-full bg-gradient-to-r from-indigo-500 to-indigo-100 dark:to-indigo-900 absolute bottom-0 left-0" />
+          <p className="text-4xl font-light text-slate-800 dark:text-white tracking-tight">{totalActive}</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-32 relative overflow-hidden group transition-colors">
-          <div className="relative z-10">
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Completions</p>
-            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-500 mt-2">{totalCompletions}</p>
+        <div className="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-sm border border-white/20 dark:border-white/10">
+          <div className="flex items-center gap-2 mb-4 opacity-70">
+            <TrendingUp size={16} className="text-emerald-500" />
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Completions</p>
           </div>
-          <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <TrendingUp size={64} className="text-emerald-600 dark:text-emerald-500" />
-          </div>
-          <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-emerald-100 dark:to-emerald-900 absolute bottom-0 left-0" />
+          <p className="text-4xl font-light text-slate-800 dark:text-white tracking-tight">{totalCompletions}</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-32 relative overflow-hidden group transition-colors">
-           <div className="relative z-10">
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Avg. 30-Day Rate</p>
-            <p className="text-3xl font-bold text-amber-500 dark:text-amber-400 mt-2">{avgSuccessRate}%</p>
+        <div className="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-sm border border-white/20 dark:border-white/10">
+           <div className="flex items-center gap-2 mb-4 opacity-70">
+            <PieChartIcon size={16} className="text-amber-500" />
+            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Success Rate</p>
           </div>
-          <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <PieChartIcon size={64} className="text-amber-500 dark:text-amber-400" />
-          </div>
-          <div className="h-1 w-full bg-gradient-to-r from-amber-500 to-amber-100 dark:to-amber-900 absolute bottom-0 left-0" />
+          <p className="text-4xl font-light text-slate-800 dark:text-white tracking-tight">{avgSuccessRate}<span className="text-2xl text-slate-400 font-light ml-1">%</span></p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-32 relative overflow-hidden group transition-colors">
-           <div className="relative z-10">
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Highest Streak</p>
-            <p className="text-3xl font-bold text-orange-500 dark:text-orange-400 mt-2">{bestStreak}</p>
+        <div className="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-sm border border-white/20 dark:border-white/10">
+           <div className="flex items-center gap-2 mb-4 opacity-70">
+            <Zap size={16} className="text-orange-500" />
+            <p className="text-[10px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">Best Streak</p>
           </div>
-          <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Zap size={64} className="text-orange-500 dark:text-orange-400" />
-          </div>
-          <div className="h-1 w-full bg-gradient-to-r from-orange-500 to-orange-100 dark:to-orange-900 absolute bottom-0 left-0" />
+          <p className="text-4xl font-light text-slate-800 dark:text-white tracking-tight">{bestStreak}</p>
         </div>
       </div>
 
       {/* Contribution Graph (Heatmap) */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
+      <div className="glass-panel p-6 rounded-2xl overflow-hidden">
         <div className="mb-6 flex items-center justify-between">
-            <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Yearly Activity</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Your total habit contributions over the last year</p>
+            <div className="flex flex-col gap-1">
+                <h3 className="font-semibold text-slate-800 dark:text-slate-100">Yearly Activity</h3>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Contributions</p>
             </div>
           {/* Legend */}
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -649,7 +357,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                             {week.map((day, dIndex) => (
                                 <div 
                                     key={day.dateStr}
-                                    className={`w-3 h-3 rounded-[2px] transition-all hover:ring-2 hover:ring-slate-300 dark:hover:ring-slate-600 hover:z-10 relative group ${getHeatmapColor(day.intensity)}`}
+                                    className={`w-[14px] h-[14px] rounded-[4px] transition-all duration-300 hover:scale-125 hover:z-10 relative cursor-pointer ${getHeatmapColor(day.intensity)}`}
                                     title={`${format(day.date, 'MMM d, yyyy')}: ${day.count} habits`}
                                 >
                                     {/* Tooltip for better UX */}
@@ -673,11 +381,11 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Activity Trend - Takes up 2/3 columns */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 lg:col-span-2 transition-colors">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Activity Trend</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Daily completions over the last 30 days</p>
+        <div className="glass-panel p-6 rounded-2xl lg:col-span-2">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col gap-1">
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100">Activity Trend</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Last 30 Days</p>
             </div>
           </div>
           <div className="h-72 w-full">
@@ -685,11 +393,11 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
               <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+                <CartesianGrid vertical={false} horizontal={false} />
                 <XAxis 
                   dataKey="date" 
                   tick={{ fill: axisColor, fontSize: 11 }} 
@@ -705,13 +413,13 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Area 
-                  type="monotone" 
+                  type="natural" 
                   dataKey="count" 
-                  stroke="#6366f1" 
-                  strokeWidth={2}
+                  stroke="#818cf8" 
+                  strokeWidth={3}
                   fillOpacity={1} 
                   fill="url(#colorCount)" 
-                  activeDot={{ r: 6, strokeWidth: 0, fill: '#4f46e5' }}
+                  activeDot={{ r: 6, strokeWidth: 3, stroke: '#ffffff', fill: '#4f46e5' }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -719,15 +427,21 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
         </div>
 
         {/* Weekly Performance - Takes up 1/3 column */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
-           <div className="mb-6">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Weekly Focus</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Total completions by day</p>
+        <div className="glass-panel p-6 rounded-2xl">
+           <div className="mb-8 flex flex-col gap-1">
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100">Weekly Focus</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Volume</p>
            </div>
            <div className="h-72 w-full">
              <ResponsiveContainer width="100%" height="100%">
                <BarChart data={dayOfWeekData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+                 <defs>
+                   <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                     <stop offset="0%" stopColor="#818cf8" />
+                     <stop offset="100%" stopColor="#4f46e5" />
+                   </linearGradient>
+                 </defs>
+                 <CartesianGrid vertical={false} horizontal={false} />
                  <XAxis 
                    dataKey="name" 
                    tick={{ fill: axisColor, fontSize: 11 }} 
@@ -741,9 +455,9 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                    allowDecimals={false}
                  />
                  <Tooltip cursor={{ fill: tooltipCursorColor }} content={<CustomTooltip />} />
-                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                 <Bar dataKey="value" radius={[6, 6, 6, 6]} maxBarSize={40}>
                     {dayOfWeekData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index > 4 ? '#10b981' : '#6366f1'} fillOpacity={0.8} />
+                      <Cell key={`cell-${index}`} fill="url(#barGradient)" fillOpacity={0.9} />
                     ))}
                  </Bar>
                </BarChart>
@@ -754,15 +468,15 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          {/* Top Habits Leaderboard */}
-         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
-            <div className="mb-6">
-               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Consistency Leaderboard</h3>
-               <p className="text-sm text-slate-500 dark:text-slate-400">Top habits by completion rate (last 30 days)</p>
+         <div className="glass-panel p-6 rounded-2xl">
+            <div className="mb-8 flex flex-col gap-1">
+               <h3 className="font-semibold text-slate-800 dark:text-slate-100">Consistency Tracker</h3>
+               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Top Performing Habits</p>
             </div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={consistencyData} layout="vertical" margin={{ left: 0, right: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={gridColor} />
+                  <CartesianGrid vertical={false} horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} hide />
                   <YAxis 
                     type="category" 
@@ -773,7 +487,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                     tickLine={false}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="rate" radius={[0, 4, 4, 0]} barSize={24} background={{ fill: darkMode ? '#1e293b' : '#f8fafc' }}>
+                  <Bar dataKey="rate" radius={[12, 12, 12, 12]} barSize={12} background={{ fill: darkMode ? '#1e293b' : '#f1f5f9', radius: 12 }}>
                     {consistencyData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -784,10 +498,10 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
          </div>
 
          {/* Category Distribution */}
-         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
-           <div className="mb-6">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Category Distribution</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Where you are spending your effort</p>
+         <div className="glass-panel p-6 rounded-2xl">
+           <div className="mb-8 flex flex-col gap-1">
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100">Category Split</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Effort Distribution</p>
            </div>
            <div className="h-72 w-full flex items-center justify-center">
              {categoryData.length > 0 ? (
@@ -797,9 +511,10 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                      data={categoryData}
                      cx="50%"
                      cy="50%"
-                     innerRadius={60}
-                     outerRadius={100}
-                     paddingAngle={5}
+                     innerRadius={70}
+                     outerRadius={90}
+                     paddingAngle={6}
+                     cornerRadius={10}
                      dataKey="value"
                      strokeWidth={0}
                    >
@@ -825,33 +540,33 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
       </div>
 
       {/* Target Success Rate */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
-        <div className="mb-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Target Success Rate</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Percentage of time periods (weeks/months) where you met your goal</p>
+      <div className="glass-panel p-6 rounded-2xl">
+        <div className="mb-8 flex flex-col gap-1">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100">Goal Adherence</h3>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Success by Frequency</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {targetAchievementData.map((item) => (
-            <div key={item.name} className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
+            <div key={item.name} className="glass-panel p-4 rounded-xl">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h4 className="font-semibold text-slate-900 dark:text-white">{item.name}</h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{item.type} Goal: {item.goal}</p>
                 </div>
-                <div className={`px-2 py-1 rounded text-xs font-bold ${
-                  item.rate >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                  item.rate >= 50 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                  'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                <div className={`px-2 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider ${
+                  item.rate >= 80 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
+                  item.rate >= 50 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                  'bg-rose-500/10 text-rose-600 dark:text-rose-400'
                 }`}>
                   {item.rate}%
                 </div>
               </div>
-              <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800/80 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    item.rate >= 80 ? 'bg-emerald-500' :
-                    item.rate >= 50 ? 'bg-amber-500' :
-                    'bg-rose-500'
+                  className={`h-full rounded-full transition-all duration-500 shadow-sm ${
+                    item.rate >= 80 ? 'bg-emerald-500 shadow-emerald-500/50' :
+                    item.rate >= 50 ? 'bg-amber-500 shadow-amber-500/50' :
+                    'bg-rose-500 shadow-rose-500/50'
                   }`}
                   style={{ width: `${item.rate}%` }}
                 />

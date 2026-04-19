@@ -79,8 +79,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage your application preferences and data.</p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+      <div className="glass-panel rounded-2xl overflow-hidden">
+        <div className="p-6 border-b border-white/20 dark:border-white/10">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
               <Database className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -123,7 +123,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
                 Run on system startup (desktop only)
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex flex-col justify-between gap-4">
+                <div className="glass-panel p-4 rounded-2xl flex flex-col justify-between gap-4">
                   <div>
                     <p className="font-medium text-slate-900 dark:text-slate-200 text-sm">Export Data</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Download a copy of your habits and history as a JSON file.</p>
@@ -134,7 +134,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
                   </Button>
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex flex-col justify-between gap-4">
+                <div className="glass-panel p-4 rounded-2xl flex flex-col justify-between gap-4">
                   <div>
                     <p className="font-medium text-slate-900 dark:text-slate-200 text-sm">Import Data</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Restore your habits from a backup file. This will replace current data.</p>
@@ -154,7 +154,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
               </div>
            </div>
 
-           <div className="border-t border-slate-100 dark:border-slate-800" />
+           <div className="border-t border-white/20 dark:border-white/10" />
            
            {/* Archived Habits */}
            <div className="space-y-4">
@@ -163,12 +163,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
                 Archived Habits
              </h4>
              {archivedHabits.length > 0 ? (
-               <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50/30 dark:bg-slate-800/30">
+               <div className="glass-panel rounded-2xl overflow-hidden">
                  {archivedHabits.map((habit, index) => (
                    <div 
                     key={habit.id} 
                     className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                      index !== archivedHabits.length - 1 ? 'border-b border-slate-100 dark:border-slate-700' : ''
+                      index !== archivedHabits.length - 1 ? 'border-b border-white/10 dark:border-white/5' : ''
                     }`}
                    >
                      <div className="flex items-center gap-3">
@@ -196,17 +196,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClearData, onImpor
                  ))}
                </div>
              ) : (
-               <div className="p-8 text-center bg-slate-50 dark:bg-slate-800 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+               <div className="glass-panel p-8 text-center rounded-2xl border-dashed opacity-70">
                  <Layers className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                  <p className="text-sm text-slate-500 dark:text-slate-400">No archived habits found.</p>
                </div>
              )}
            </div>
 
-           <div className="border-t border-slate-100 dark:border-slate-800" />
+           <div className="border-t border-white/20 dark:border-white/10" />
 
            {/* Danger Zone */}
-           <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+           <div className="glass-panel !border-red-500/30 !bg-red-500/10 p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
              <div className="flex gap-4">
                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg shrink-0 h-fit">
                  <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-500" />

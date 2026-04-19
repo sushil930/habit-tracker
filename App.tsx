@@ -379,83 +379,65 @@ const App: React.FC = () => {
   }, [datesToDisplay, timeRange, currentDate, customStart, customEnd]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900 transition-colors duration-300">
+    <div className="hf-bg text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900 flex flex-col transition-colors duration-300">
       {/* Navbar */}
-      <nav className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="sticky top-0 z-30 glass-nav transition-colors duration-300">
+        <div className="max-w-5xl mx-auto px-6">
           <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-2">
-              <div className="bg-indigo-600 p-1.5 rounded-lg">
+            {/* Logo */}
+            <div className="flex items-center gap-2.5">
+              <div className="bg-indigo-600 p-1.5 rounded-lg shadow-sm shadow-indigo-200">
                 <CalendarIcon className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">HabitFlow</span>
             </div>
-            
-            <div id="view-toggles" className="hidden md:flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg transition-colors">
-              <button
-                onClick={() => setViewMode('dashboard')}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'dashboard' 
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <LayoutDashboard size={16} />
-                  Dashboard
-                </div>
-              </button>
-              <button
-                onClick={() => setViewMode('analytics')}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'analytics' 
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <BarChart2 size={16} />
-                  Analytics
-                </div>
-              </button>
-              <button
-                onClick={() => setViewMode('settings')}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'settings' 
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Settings size={16} />
-                  Settings
-                </div>
-              </button>
+
+            {/* View Toggles */}
+            <div id="view-toggles" className="hidden md:flex items-center glass-panel p-1 rounded-2xl gap-1">
+              {(['dashboard', 'analytics', 'settings'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-all capitalize flex items-center gap-2 ${
+                    viewMode === mode
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {mode === 'dashboard' && <LayoutDashboard size={15} />}
+                  {mode === 'analytics' && <BarChart2 size={15} />}
+                  {mode === 'settings' && <Settings size={15} />}
+                  {mode}
+                </button>
+              ))}
             </div>
 
-            <div className="flex items-center gap-4">
-               {/* Dark Mode Toggle */}
-               <button
-                 onClick={() => setDarkMode(!darkMode)}
-                 className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                 title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-               >
-                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-               </button>
+            {/* Right actions */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="glass-button p-2 rounded-xl text-slate-600 dark:text-slate-400"
+                title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
 
-               <div id="btn-new-habit">
-                  <Button onClick={() => setIsFormOpen(true)} size="sm">
-                    <Plus size={18} className="mr-1.5" />
-                    New Habit
-                  </Button>
-               </div>
+              <div id="btn-new-habit">
+                <button
+                  onClick={() => setIsFormOpen(true)}
+                  className="glass-button px-4 py-2 rounded-xl text-sm font-semibold text-indigo-700 dark:text-indigo-300 flex items-center gap-2 hover:shadow-sm"
+                >
+                  <Plus size={16} />
+                  New Habit
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-grow max-w-5xl w-full mx-auto px-6 py-10">
         {viewMode === 'dashboard' ? (
           <div className="space-y-6 animate-in fade-in duration-500">
             {/* Review Banner */}
@@ -477,79 +459,79 @@ const App: React.FC = () => {
             )}
 
             {/* Header Controls */}
-            <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-1">
                   {timeRange === 'year' ? 'Yearly Overview' : timeRange === 'month' ? 'Monthly Tracker' : timeRange === 'custom' ? 'Custom Range' : 'Weekly Tracker'}
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                  {timeRange === 'year' 
-                    ? 'Visualize your consistency throughout the year.' 
+                <p className="text-slate-500 dark:text-slate-400 font-medium">
+                  {timeRange === 'year'
+                    ? 'Visualize your consistency throughout the year.'
                     : 'Track your habits and build consistency.'}
                 </p>
               </div>
-              
-              <div className="flex flex-col items-end gap-3">
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  {/* Range Toggle */}
-                  <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
-                    {(['week', 'month', 'year', 'custom'] as TimeRange[]).map((range) => (
-                      <button
-                        key={range}
-                        onClick={() => setTimeRange(range)}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all capitalize ${
-                          timeRange === range
-                            ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                        }`}
-                      >
-                        {range}
-                      </button>
-                    ))}
-                  </div>
 
-                  {/* Date Navigator */}
-                  <div className="flex items-center bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-1 transition-colors">
-                    <button 
-                      onClick={handlePrev}
-                      className="p-1.5 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-md text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                      title="Previous"
+              {/* Time Controls */}
+              <div className="glass-panel p-1.5 rounded-2xl flex items-center gap-2 flex-wrap">
+                {/* Range Toggle */}
+                <div className="flex bg-black/5 dark:bg-white/5 rounded-xl p-1">
+                  {(['week', 'month', 'year', 'custom'] as TimeRange[]).map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setTimeRange(range)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize ${
+                        timeRange === range
+                          ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                      }`}
                     >
-                      <ChevronLeft size={20} />
+                      {range}
                     </button>
-                    <span className="px-4 font-medium text-slate-700 dark:text-slate-200 tabular-nums min-w-[140px] text-center text-sm">
-                      {dateLabel}
-                    </span>
-                    <button 
-                      onClick={handleNext}
-                      className="p-1.5 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-md text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                      title="Next"
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
+                  ))}
+                </div>
+
+                <div className="w-px h-5 bg-slate-300 dark:bg-slate-600" />
+
+                {/* Date Navigator */}
+                <div className="flex items-center gap-3 px-1">
+                  <button
+                    onClick={handlePrev}
+                    className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200 tabular-nums whitespace-nowrap">
+                    {dateLabel}
+                  </span>
+                  <button
+                    onClick={handleNext}
+                    className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
                 </div>
 
                 {/* Custom Date Inputs */}
                 {timeRange === 'custom' && (
-                  <div className="flex items-center gap-2 animate-in slide-in-from-top-2 duration-300">
-                     <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
-                       <CalendarRange size={14} className="text-slate-400" />
-                       <input 
-                         type="date" 
-                         value={format(customStart, 'yyyy-MM-dd')}
-                         onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                         className="text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded bg-transparent dark:[color-scheme:dark]"
-                       />
-                       <span className="text-slate-300 mx-1">→</span>
-                       <input 
-                         type="date" 
-                         value={format(customEnd, 'yyyy-MM-dd')}
-                         onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                         className="text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded bg-transparent dark:[color-scheme:dark]"
-                       />
-                     </div>
-                  </div>
+                  <>
+                    <div className="w-px h-5 bg-slate-300 dark:bg-slate-600" />
+                    <div className="flex items-center gap-2 px-1">
+                      <CalendarRange size={13} className="text-slate-400" />
+                      <input
+                        type="date"
+                        value={format(customStart, 'yyyy-MM-dd')}
+                        onChange={(e) => handleCustomDateChange('start', e.target.value)}
+                        className="text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none bg-transparent dark:[color-scheme:dark]"
+                      />
+                      <span className="text-slate-400">→</span>
+                      <input
+                        type="date"
+                        value={format(customEnd, 'yyyy-MM-dd')}
+                        onChange={(e) => handleCustomDateChange('end', e.target.value)}
+                        className="text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none bg-transparent dark:[color-scheme:dark]"
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -594,7 +576,7 @@ const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-4 py-8 text-center text-slate-400 text-sm">
+      <footer className="w-full text-center py-6 text-sm text-slate-400 dark:text-slate-600">
         <p>&copy; {new Date().getFullYear()} HabitFlow. Stay consistent.</p>
       </footer>
 

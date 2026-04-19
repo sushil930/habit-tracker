@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { format, isSameDay, startOfDay, getDay, isAfter, getWeek, subWeeks, addWeeks, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, isSameDay, startOfDay, isAfter, getDay, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { Habit, TimeRange } from '../types';
-import { Check, Flame, Trash2, Sparkles, Archive, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Check, Flame, Trash2, Sparkles, Archive } from 'lucide-react';
 import { calculateStreak } from '../services/habitService';
 import { HabitIcon } from './HabitIcon';
 import { FireAnimation } from './FireAnimation';
@@ -264,190 +264,167 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
     );
   }
 
-  // --- Render Week & Month View (Checkbox Grid) ---
+  // Each day column = circle (30px) + margin (3px × 2) = 36px
+  const CELL_W = 36;
+  // Left section fixed width (icon-box 54px + name area) — matches card flex-1 min-w
+  const LEFT_W = 220;
+  // Center stats fixed width — matches card center section
+  const STATS_W = 176;
+
+  // --- Render Week & Month View (Glassmorphism Card Rows) ---
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
-      <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
-              <th className="p-4 w-64 font-medium text-slate-500 dark:text-slate-400 text-sm sticky left-0 bg-slate-50/50 dark:bg-slate-950/50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] dark:shadow-none">Habit</th>
-              
-              {/* Prev Week Preview (Week View Only) */}
-              {timeRange === 'week' && (
-                <th className="p-4 text-center font-medium text-slate-400 dark:text-slate-600 text-xs w-16 border-r border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
-                  Prev
-                </th>
-              )}
+    <div className="space-y-4" data-purpose="habit-list">
 
-              {dates.map((date) => {
-                const isToday = isSameDay(date, today);
-                return (
-                  <th key={date.toString()} className={`p-4 text-center min-w-[3.5rem] ${isToday ? 'bg-indigo-50/50 dark:bg-indigo-900/20' : ''}`}>
-                    <div className="flex flex-col items-center">
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{format(date, 'EEE')}</span>
-                      <span className={`text-sm font-semibold mt-1 w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-indigo-600 text-white' : 'text-slate-700 dark:text-slate-300'}`}>
-                        {format(date, 'd')}
-                      </span>
-                    </div>
-                  </th>
-                );
-              })}
-
-              {/* Next Week Preview (Week View Only) */}
-              {timeRange === 'week' && (
-                <th className="p-4 text-center font-medium text-slate-400 dark:text-slate-600 text-xs w-16 border-l border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
-                  Next
-                </th>
-              )}
-
-              {/* Target Progress (Week View Only) */}
-              {timeRange === 'week' && (
-                <th className="p-4 w-32 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Target</th>
-              )}
-
-              <th className="p-4 w-24 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Streak</th>
-              <th className="p-4 w-20 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {sortedHabits.map((habit) => {
-              const streak = calculateStreak(habit);
-              const { isTailwind, color } = getColorProps(habit.color);
-              
-              // Weekly Stats Calculation
-              let prevStats, currentStats, nextStats, delta = 0;
-              if (timeRange === 'week' && dates.length > 0) {
-                const currentWeekStart = dates[0];
-                const prevWeekStart = subWeeks(currentWeekStart, 1);
-                const nextWeekStart = addWeeks(currentWeekStart, 1);
-                
-                prevStats = getWeeklyStats(habit, prevWeekStart);
-                currentStats = getWeeklyStats(habit, currentWeekStart);
-                nextStats = getWeeklyStats(habit, nextWeekStart);
-                
-                delta = currentStats.completed - prevStats.completed;
-              }
-
+      {/* Day-of-week column headers (week view only) */}
+      {timeRange === 'week' && (
+        <div className="flex items-center" style={{ paddingLeft: 16, paddingRight: 16 }}>
+          {/* Spacer: mirrors card left section */}
+          <div className="flex-1" />
+          {/* Spacer: mirrors card center stats */}
+          <div className="hidden sm:block" style={{ width: STATS_W, flexShrink: 0 }} />
+          {/* Day labels — separator to mirror card's border-l + pl-4 */}
+          <div className="flex items-center" style={{ paddingLeft: 17 }}>
+            {dates.map((date) => {
+              const isToday = isSameDay(date, today);
               return (
-                <tr key={habit.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="p-4 sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 transition-colors z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] dark:shadow-none">
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isTailwind ? color.replace('bg-', 'text-').replace('500', '600') + ' bg-opacity-10' : ''}`}
-                        style={!isTailwind ? { backgroundColor: color + '20', color: color } : {}}
-                      >
-                        <HabitIcon iconName={habit.icon} className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-900 dark:text-slate-200 whitespace-nowrap">{habit.name}</p>
-                        {streak > 3 && (
-                          <p className="text-xs text-orange-500 flex items-center gap-1">
-                            <FireAnimation className="w-3 h-3" /> On fire!
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Prev Week Preview */}
-                  {timeRange === 'week' && prevStats && (
-                    <td className="p-4 text-center border-r border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
-                      <span className="text-xs font-medium text-slate-400 dark:text-slate-600">{prevStats.completed}/7</span>
-                    </td>
-                  )}
-
-                  {dates.map((date) => {
-                    const dateStr = format(date, 'yyyy-MM-dd');
-                    const isCompleted = !!habit.logs[dateStr];
-                    const isToday = isSameDay(date, today);
-                    const isFuture = date > today;
-
-                    return (
-                      <td key={dateStr} className={`p-2 text-center ${isToday ? 'bg-indigo-50/20 dark:bg-indigo-900/10' : ''}`}>
-                        <button
-                          onClick={() => !isFuture && onToggle(habit.id, date)}
-                          disabled={isFuture}
-                          className={`
-                            relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 mx-auto
-                            ${isFuture ? 'opacity-20 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5'}
-                            ${isCompleted 
-                              ? `text-white shadow-md shadow-indigo-200 dark:shadow-none scale-100 ${isTailwind ? color : ''}` 
-                              : 'bg-slate-100 dark:bg-slate-800 text-transparent scale-90 hover:scale-95'
-                            }
-                          `}
-                          style={isCompleted && !isTailwind ? { backgroundColor: color } : {}}
-                        >
-                          <Check className={`w-4 h-4 transition-transform duration-300 ${isCompleted ? 'scale-100 rotate-0' : 'scale-50 -rotate-45'}`} strokeWidth={3} />
-                        </button>
-                      </td>
-                    );
-                  })}
-
-                  {/* Next Week Preview */}
-                  {timeRange === 'week' && nextStats && (
-                    <td className="p-4 text-center border-l border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-900/30">
-                      <span className="text-xs font-medium text-slate-400 dark:text-slate-600">{nextStats.completed}/7</span>
-                    </td>
-                  )}
-
-                  {/* Target Progress */}
-                  {timeRange === 'week' && dates.length > 0 && (
-                    <td className="p-4 text-center align-middle">
-                      {(() => {
-                         const progress = getTargetProgress(habit, dates[0]);
-                         const percent = Math.min(100, Math.round((progress.current / progress.target) * 100));
-                         const isMet = progress.current >= progress.target;
-                         
-                         return (
-                           <div className="flex flex-col gap-1.5 w-24 mx-auto">
-                             <div className="flex justify-between items-end text-xs">
-                               <span className={`font-bold ${isMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                                 {progress.current}/{progress.target}
-                               </span>
-                               <span className="text-[10px] text-slate-400 uppercase">{progress.label}</span>
-                             </div>
-                             <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                               <div 
-                                 className={`h-full rounded-full transition-all duration-500 ${
-                                   isMet ? 'bg-emerald-500' : 'bg-indigo-500'
-                                 }`}
-                                 style={{ width: `${percent}%` }}
-                               />
-                             </div>
-                           </div>
-                         );
-                      })()}
-                    </td>
-                  )}
-
-                  <td className="p-4 text-center">
-                    {renderStreakCell(streak)}
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => onArchive(habit.id)}
-                        className="p-2 text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                        title="Archive habit"
-                      >
-                        <Archive size={16} />
-                      </button>
-                      <button 
-                        onClick={() => onDelete(habit.id)}
-                        className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Delete habit"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <div
+                  key={date.toString()}
+                  className="flex flex-col items-center"
+                  style={{ width: CELL_W, flexShrink: 0 }}
+                >
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    {format(date, 'EEE')}
+                  </span>
+                  <span className={`text-xs font-semibold mt-0.5 w-6 h-6 flex items-center justify-center rounded-full ${
+                    isToday ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400'
+                  }`}>
+                    {format(date, 'd')}
+                  </span>
+                </div>
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </div>
+          {/* Spacer: mirrors hover-action buttons (opacity-0 but always take space) */}
+          {/* 2 × (p-1.5=12px + icon-15px) + gap-1=4px + ml-2=8px = 66px */}
+          <div style={{ width: 66, flexShrink: 0 }} />
+        </div>
+      )}
+
+      {sortedHabits.map((habit) => {
+        const streak = calculateStreak(habit);
+        const { isTailwind, color } = getColorProps(habit.color);
+
+        // Compute target progress (week view)  
+        const progress = timeRange === 'week' && dates.length > 0
+          ? getTargetProgress(habit, dates[0])
+          : null;
+        const progressPercent = progress
+          ? Math.min(100, Math.round((progress.current / progress.target) * 100))
+          : 0;
+        const isMet = progress ? progress.current >= progress.target : false;
+
+        return (
+          <div key={habit.id} className="glass-panel rounded-2xl p-4 flex items-center group">
+
+            {/* Left: Icon + Name + Progress */}
+            <div className="flex items-center flex-1 min-w-0">
+              <div
+                className="icon-box"
+                style={!isTailwind ? { backgroundColor: color + '22', color } : {}}
+              >
+                <HabitIcon
+                  iconName={habit.icon}
+                  className={`w-5 h-5 ${isTailwind ? color.replace('bg-', 'text-').replace('500', '600') : ''}`}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-slate-800 dark:text-slate-100 font-semibold truncate">
+                  {habit.name}
+                </h3>
+                {timeRange === 'week' && progress && (
+                  <div className="progress-base">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${isMet ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Center: Weekly badge + Streak (week view) */}
+            {timeRange === 'week' && progress && (
+              <div className="hidden sm:flex items-center gap-3 flex-shrink-0" style={{ width: STATS_W }}>
+                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold ${
+                  isMet
+                    ? 'bg-emerald-100/60 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-slate-100/60 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400'
+                }`}>
+                  <Check className="w-3 h-3" strokeWidth={3} />
+                  {progress.current}/{progress.target} {progress.label.toUpperCase()}
+                </div>
+                {renderStreakCell(streak)}
+              </div>
+            )}
+
+            {/* Month view: just the streak */}
+            {timeRange === 'month' && (
+              <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                {renderStreakCell(streak)}
+              </div>
+            )}
+
+            {/* Right: Day status circles — pl-4 + 1px border = 17px separator, mirrors header */}
+            <div className="flex items-center flex-shrink-0" style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: 16 }}>
+              {dates.map((date) => {
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const isCompleted = !!habit.logs[dateStr];
+                const isFuture = isAfter(date, today);
+
+                let circleClass = 'status-circle';
+                if (isFuture) {
+                  circleClass += ' future-circle';
+                } else if (isCompleted) {
+                  circleClass += ' done-green';
+                }
+
+                return (
+                  <button
+                    key={dateStr}
+                    type="button"
+                    disabled={isFuture}
+                    onClick={() => !isFuture && onToggle(habit.id, date)}
+                    className={circleClass}
+                    title={`${format(date, 'EEE MMM d')}${isCompleted ? ' ✓' : ''}`}
+                  >
+                    {isCompleted && (
+                      <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Hover actions */}
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+              <button
+                onClick={() => onArchive(habit.id)}
+                className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                title="Archive habit"
+              >
+                <Archive size={15} />
+              </button>
+              <button
+                onClick={() => onDelete(habit.id)}
+                className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                title="Delete habit"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
-};
+};
