@@ -8,8 +8,6 @@ import {
   ChevronRight,
   Settings,
   CalendarRange,
-  Moon,
-  Sun
 } from 'lucide-react';
 import { 
   startOfWeek, 
@@ -84,20 +82,16 @@ const App: React.FC = () => {
     return differenceInDays(new Date(), earliest) >= 30;
   }, [habits]);
 
-  // Dark Mode State
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('habitflow_theme');
-        if (saved) return saved === 'dark';
-      } catch {
-        // ignore (some WebViews can block storage)
-      }
-
-      return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false;
+  // Force dark mode always — SpaceX is the void
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+    try {
+      localStorage.setItem('habitflow_theme', 'dark');
+    } catch {
+      // ignore
     }
-    return false;
-  });
+  }, []);
+
   // Check for monthly review
   useEffect(() => {
     if (isReviewDue() && hasMonthOfUsage) {
@@ -106,25 +100,6 @@ const App: React.FC = () => {
       setShowReviewBanner(false);
     }
   }, [hasMonthOfUsage]);
-
-  // Apply Dark Mode Class
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      try {
-        localStorage.setItem('habitflow_theme', 'dark');
-      } catch {
-        // ignore
-      }
-    } else {
-      document.documentElement.classList.remove('dark');
-      try {
-        localStorage.setItem('habitflow_theme', 'light');
-      } catch {
-        // ignore
-      }
-    }
-  }, [darkMode]);
 
   // Keyboard navigation for week view
   useEffect(() => {
@@ -213,7 +188,6 @@ const App: React.FC = () => {
       });
     } else {
       // Custom Range
-      // Ensure start is before end
       const start = customStart > customEnd ? customEnd : customStart;
       const end = customEnd < customStart ? customStart : customEnd;
       
@@ -379,34 +353,32 @@ const App: React.FC = () => {
   }, [datesToDisplay, timeRange, currentDate, customStart, customEnd]);
 
   return (
-    <div className="hf-bg text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900 flex flex-col transition-colors duration-300">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-30 glass-nav transition-colors duration-300">
+    <div className="hf-bg text-spectral font-sans flex flex-col min-h-screen">
+      {/* ═══ Navigation ═══ */}
+      <nav className="sticky top-0 z-30 ghost-nav">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
-            <div className="flex items-center gap-2.5">
-              <div className="bg-indigo-600 p-1.5 rounded-lg shadow-sm shadow-indigo-200">
-                <CalendarIcon className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">HabitFlow</span>
+            <div className="flex items-center gap-3">
+              <CalendarIcon className="w-5 h-5 text-spectral opacity-60" />
+              <span className="text-sm font-bold uppercase tracking-nav text-spectral">HabitFlow</span>
             </div>
 
             {/* View Toggles */}
-            <div id="view-toggles" className="hidden md:flex items-center glass-panel p-1 rounded-2xl gap-1">
+            <div id="view-toggles" className="hidden md:flex items-center ghost-panel p-1 gap-1">
               {(['dashboard', 'analytics', 'settings'] as const).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-all capitalize flex items-center gap-2 ${
+                  className={`px-4 py-1.5 rounded text-xs font-bold uppercase tracking-nav transition-all flex items-center gap-2 ${
                     viewMode === mode
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      ? 'bg-[rgba(240,240,250,0.12)] text-spectral'
+                      : 'text-spectral/40 hover:text-spectral/80'
                   }`}
                 >
-                  {mode === 'dashboard' && <LayoutDashboard size={15} />}
-                  {mode === 'analytics' && <BarChart2 size={15} />}
-                  {mode === 'settings' && <Settings size={15} />}
+                  {mode === 'dashboard' && <LayoutDashboard size={14} />}
+                  {mode === 'analytics' && <BarChart2 size={14} />}
+                  {mode === 'settings' && <Settings size={14} />}
                   {mode}
                 </button>
               ))}
@@ -414,20 +386,12 @@ const App: React.FC = () => {
 
             {/* Right actions */}
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="glass-button p-2 rounded-xl text-slate-600 dark:text-slate-400"
-                title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-
               <div id="btn-new-habit">
                 <button
                   onClick={() => setIsFormOpen(true)}
-                  className="glass-button px-4 py-2 rounded-xl text-sm font-semibold text-indigo-700 dark:text-indigo-300 flex items-center gap-2 hover:shadow-sm"
+                  className="ghost-btn px-5 py-2 text-xs flex items-center gap-2"
                 >
-                  <Plus size={16} />
+                  <Plus size={14} />
                   New Habit
                 </button>
               </div>
@@ -436,20 +400,20 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* ═══ Main Content ═══ */}
       <main className="flex-grow max-w-5xl w-full mx-auto px-6 py-10">
         {viewMode === 'dashboard' ? (
-          <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="space-y-8">
             {/* Review Banner */}
             {showReviewBanner && (
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-4 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+              <div className="ghost-panel p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-800 rounded-lg">
-                    <CalendarIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  <div className="p-2 rounded bg-[rgba(240,240,250,0.06)]">
+                    <CalendarIcon className="w-5 h-5 text-spectral opacity-60" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-indigo-900 dark:text-indigo-200">Monthly Review Ready</h3>
-                    <p className="text-sm text-indigo-700 dark:text-indigo-300">Reflect on your progress and plan for the month ahead.</p>
+                    <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Monthly Review Ready</h3>
+                    <p className="text-xs text-spectral/40 uppercase tracking-micro mt-0.5">Reflect on your progress</p>
                   </div>
                 </div>
                 <Button onClick={() => setViewMode('review')} size="sm">
@@ -461,10 +425,10 @@ const App: React.FC = () => {
             {/* Header Controls */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div>
-                <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-1">
+                <h1 className="text-3xl font-bold uppercase tracking-stencil text-spectral">
                   {timeRange === 'year' ? 'Yearly Overview' : timeRange === 'month' ? 'Monthly Tracker' : timeRange === 'custom' ? 'Custom Range' : 'Weekly Tracker'}
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 font-medium">
+                <p className="text-xs text-spectral/30 uppercase tracking-nav mt-2">
                   {timeRange === 'year'
                     ? 'Visualize your consistency throughout the year.'
                     : 'Track your habits and build consistency.'}
@@ -472,17 +436,17 @@ const App: React.FC = () => {
               </div>
 
               {/* Time Controls */}
-              <div className="glass-panel p-1.5 rounded-2xl flex items-center gap-2 flex-wrap">
+              <div className="ghost-panel p-1.5 flex items-center gap-2 flex-wrap">
                 {/* Range Toggle */}
-                <div className="flex bg-black/5 dark:bg-white/5 rounded-xl p-1">
+                <div className="flex bg-[rgba(240,240,250,0.04)] rounded p-0.5">
                   {(['week', 'month', 'year', 'custom'] as TimeRange[]).map((range) => (
                     <button
                       key={range}
                       onClick={() => setTimeRange(range)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize ${
+                      className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-nav transition-all ${
                         timeRange === range
-                          ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm'
-                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                          ? 'bg-[rgba(240,240,250,0.12)] text-spectral'
+                          : 'text-spectral/30 hover:text-spectral/60'
                       }`}
                     >
                       {range}
@@ -490,22 +454,22 @@ const App: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="w-px h-5 bg-slate-300 dark:bg-slate-600" />
+                <div className="w-px h-5 bg-[rgba(240,240,250,0.10)]" />
 
                 {/* Date Navigator */}
                 <div className="flex items-center gap-3 px-1">
                   <button
                     onClick={handlePrev}
-                    className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    className="text-spectral/30 hover:text-spectral transition-colors"
                   >
                     <ChevronLeft size={16} />
                   </button>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200 tabular-nums whitespace-nowrap">
+                  <span className="text-xs font-bold uppercase tracking-nav text-spectral/60 tabular-nums whitespace-nowrap">
                     {dateLabel}
                   </span>
                   <button
                     onClick={handleNext}
-                    className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    className="text-spectral/30 hover:text-spectral transition-colors"
                   >
                     <ChevronRight size={16} />
                   </button>
@@ -514,21 +478,21 @@ const App: React.FC = () => {
                 {/* Custom Date Inputs */}
                 {timeRange === 'custom' && (
                   <>
-                    <div className="w-px h-5 bg-slate-300 dark:bg-slate-600" />
+                    <div className="w-px h-5 bg-[rgba(240,240,250,0.10)]" />
                     <div className="flex items-center gap-2 px-1">
-                      <CalendarRange size={13} className="text-slate-400" />
+                      <CalendarRange size={13} className="text-spectral/30" />
                       <input
                         type="date"
                         value={format(customStart, 'yyyy-MM-dd')}
                         onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                        className="text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none bg-transparent dark:[color-scheme:dark]"
+                        className="text-xs font-bold uppercase tracking-nav text-spectral/60 focus:outline-none bg-transparent [color-scheme:dark]"
                       />
-                      <span className="text-slate-400">→</span>
+                      <span className="text-spectral/20">→</span>
                       <input
                         type="date"
                         value={format(customEnd, 'yyyy-MM-dd')}
                         onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                        className="text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none bg-transparent dark:[color-scheme:dark]"
+                        className="text-xs font-bold uppercase tracking-nav text-spectral/60 focus:outline-none bg-transparent [color-scheme:dark]"
                       />
                     </div>
                   </>
@@ -549,7 +513,7 @@ const App: React.FC = () => {
             </div>
           </div>
         ) : viewMode === 'analytics' ? (
-          <StatsView habits={habits} darkMode={darkMode} onAddHabit={() => {
+          <StatsView habits={habits} darkMode={true} onAddHabit={() => {
             setViewMode('dashboard');
             setIsFormOpen(true);
           }} />
@@ -575,12 +539,12 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="w-full text-center py-6 text-sm text-slate-400 dark:text-slate-600">
-        <p>&copy; {new Date().getFullYear()} HabitFlow. Stay consistent.</p>
+      {/* ═══ Footer ═══ */}
+      <footer className="w-full text-center py-6">
+        <p className="text-[10px] text-spectral/20 uppercase tracking-nav">&copy; {new Date().getFullYear()} HabitFlow. Stay consistent.</p>
       </footer>
 
-      {/* Modals */}
+      {/* ═══ Modals ═══ */}
       {isFormOpen && (
         <HabitForm 
           onSave={handleAddHabit} 

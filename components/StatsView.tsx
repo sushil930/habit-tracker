@@ -16,7 +16,8 @@ interface StatsViewProps {
   onAddHabit?: () => void;
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#0ea5e9', '#64748b'];
+// Spectral monochrome scale
+const COLORS = ['#f0f0fa', '#c0c0d0', '#9090a8', '#606080', '#404060', '#252540', '#3a3a55'];
 
 export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, onAddHabit }) => {
 
@@ -107,8 +108,6 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
       });
     });
 
-    // Rotate so Monday is first (optional, but standard for productivity apps)
-    // Source: Sun(0) ... Sat(6). Target: Mon ... Sun
     const rotatedDays = [...days.slice(1), days[0]];
     const rotatedCounts = [...counts.slice(1), counts[0]];
 
@@ -140,35 +139,31 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
       .map(habit => ({
         name: habit.name,
         rate: calculateCompletionRate(habit, 30),
-        color: habit.color.startsWith('bg-') ? '#6366f1' : habit.color 
+        color: '#f0f0fa'
       }))
       .sort((a, b) => b.rate - a.rate)
-      .slice(0, 10); // Top 10
+      .slice(0, 10);
   }, [habits]);
 
   // 6. Global Contribution Graph (Heatmap)
   const heatmapData = useMemo(() => {
     const today = startOfDay(new Date());
-    // Go back 52 weeks to show a full year view roughly
     const startDate = subDays(today, 364); 
-    const calendarStart = startOfWeek(startDate); // Start on Sunday
+    const calendarStart = startOfWeek(startDate);
 
     const weeks = [];
     let current = calendarStart;
     
-    // Generate 53 weeks of data to cover the full range
     for (let w = 0; w < 53; w++) {
       const week = [];
       for (let d = 0; d < 7; d++) {
          const dateStr = format(current, 'yyyy-MM-dd');
          
-         // Count total completions across all habits
          let count = 0;
          habits.forEach(h => {
            if (h.logs[dateStr]) count++;
          });
          
-         // Intensity levels for coloring (0-4 like GitHub)
          let intensity = 0;
          if (count > 0) intensity = 1;
          if (count >= 3) intensity = 2;
@@ -197,14 +192,12 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
       let totalPeriods = 0;
       
       if (freq.type === 'daily') {
-        // Use last 30 days
         const end = startOfDay(new Date());
         const start = subDays(end, 29);
         const days = eachDayOfInterval({ start, end });
         totalPeriods = 30;
         successCount = days.filter(d => habit.logs[format(d, 'yyyy-MM-dd')]).length;
       } else if (freq.type === 'weekly') {
-        // Check last 8 weeks
         const end = startOfDay(new Date());
         const start = subWeeks(end, 8);
         let current = startOfWeek(start, { weekStartsOn: 1 });
@@ -219,7 +212,6 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
            current = addWeeks(current, 1);
         }
       } else if (freq.type === 'monthly') {
-        // Check last 6 months
         const end = startOfDay(new Date());
         const start = subMonths(end, 6);
         let current = startOfMonth(start);
@@ -250,9 +242,9 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="glass-panel p-3 shadow-xl rounded-lg text-xs">
-          <p className="font-semibold text-slate-900 dark:text-slate-200 mb-1">{label}</p>
-          <p className="text-indigo-600 dark:text-indigo-400 font-medium">
+        <div className="ghost-panel-elevated p-3 text-xs">
+          <p className="font-bold uppercase tracking-micro text-spectral mb-1">{label}</p>
+          <p className="text-spectral/60">
             {payload[0].name === 'rate' ? `${payload[0].value}% Success` : `${payload[0].value} Completions`}
           </p>
         </div>
@@ -264,92 +256,91 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
   if (habits.length === 0) {
     return (
       <div className="text-center py-20">
-        <div className="bg-slate-100 dark:bg-slate-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Activity className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+        <div className="w-16 h-16 rounded bg-[rgba(240,240,250,0.04)] border border-[rgba(240,240,250,0.08)] flex items-center justify-center mx-auto mb-4">
+          <Activity className="w-8 h-8 text-spectral/20" />
         </div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-200">No data available</h3>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Start tracking habits to see your analytics.</p>
+        <h3 className="text-sm font-bold uppercase tracking-nav text-spectral">No data available</h3>
+        <p className="text-xs text-spectral/30 uppercase tracking-micro mt-2">Start tracking habits to see your analytics.</p>
       </div>
     );
   }
 
-  // Color scale for heatmap (Emerald for "Growth")
-  const getHeatmapColor = (intensity: number) => {
+  // Spectral heatmap intensity
+  const getHeatmapColor = (intensity: number): string => {
     switch (intensity) {
-        case 1: return 'bg-emerald-200 dark:bg-emerald-900';
-        case 2: return 'bg-emerald-300 dark:bg-emerald-800';
-        case 3: return 'bg-emerald-500 dark:bg-emerald-600';
-        case 4: return 'bg-emerald-700 dark:bg-emerald-500';
-        default: return 'bg-slate-100 dark:bg-slate-800'; // level 0
+        case 1: return 'rgba(240,240,250,0.12)';
+        case 2: return 'rgba(240,240,250,0.25)';
+        case 3: return 'rgba(240,240,250,0.45)';
+        case 4: return 'rgba(240,240,250,0.75)';
+        default: return 'rgba(240,240,250,0.04)';
     }
   };
 
-  // Chart styling constants
-  const axisColor = darkMode ? '#64748b' : '#94a3b8'; // slate-500 vs slate-400
-  const gridColor = darkMode ? '#334155' : '#f1f5f9'; // slate-700 vs slate-100
-  const tooltipCursorColor = darkMode ? '#1e293b' : '#f8fafc';
+  // Chart styling constants — all spectral
+  const axisColor = 'rgba(240,240,250,0.25)';
+  const tooltipCursorColor = 'rgba(240,240,250,0.04)';
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
 
 
       {/* Top Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-sm border border-white/20 dark:border-white/10">
-          <div className="flex items-center gap-2 mb-4 opacity-70">
-            <Activity size={16} className="text-indigo-500" />
-            <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Active Habits</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="ghost-panel p-5 sm:p-6 flex flex-col justify-between group hover:bg-[rgba(240,240,250,0.06)] transition-all duration-300">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity size={14} className="text-spectral/30" />
+            <p className="text-[10px] font-bold uppercase tracking-nav text-spectral/30">Active Habits</p>
           </div>
-          <p className="text-4xl font-light text-slate-800 dark:text-white tracking-tight">{totalActive}</p>
+          <p className="text-4xl font-light text-spectral tracking-tight">{totalActive}</p>
         </div>
 
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-sm border border-white/20 dark:border-white/10">
-          <div className="flex items-center gap-2 mb-4 opacity-70">
-            <TrendingUp size={16} className="text-emerald-500" />
-            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Completions</p>
+        <div className="ghost-panel p-5 sm:p-6 flex flex-col justify-between group hover:bg-[rgba(240,240,250,0.06)] transition-all duration-300">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp size={14} className="text-spectral/30" />
+            <p className="text-[10px] font-bold uppercase tracking-nav text-spectral/30">Completions</p>
           </div>
-          <p className="text-4xl font-light text-slate-800 dark:text-white tracking-tight">{totalCompletions}</p>
+          <p className="text-4xl font-light text-spectral tracking-tight">{totalCompletions}</p>
         </div>
 
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-sm border border-white/20 dark:border-white/10">
-           <div className="flex items-center gap-2 mb-4 opacity-70">
-            <PieChartIcon size={16} className="text-amber-500" />
-            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Success Rate</p>
+        <div className="ghost-panel p-5 sm:p-6 flex flex-col justify-between group hover:bg-[rgba(240,240,250,0.06)] transition-all duration-300">
+           <div className="flex items-center gap-2 mb-4">
+            <PieChartIcon size={14} className="text-spectral/30" />
+            <p className="text-[10px] font-bold uppercase tracking-nav text-spectral/30">Success Rate</p>
           </div>
-          <p className="text-4xl font-light text-slate-800 dark:text-white tracking-tight">{avgSuccessRate}<span className="text-2xl text-slate-400 font-light ml-1">%</span></p>
+          <p className="text-4xl font-light text-spectral tracking-tight">{avgSuccessRate}<span className="text-2xl text-spectral/30 font-light ml-1">%</span></p>
         </div>
 
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-sm border border-white/20 dark:border-white/10">
-           <div className="flex items-center gap-2 mb-4 opacity-70">
-            <Zap size={16} className="text-orange-500" />
-            <p className="text-[10px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">Best Streak</p>
+        <div className="ghost-panel p-5 sm:p-6 flex flex-col justify-between group hover:bg-[rgba(240,240,250,0.06)] transition-all duration-300">
+           <div className="flex items-center gap-2 mb-4">
+            <Zap size={14} className="text-spectral/30" />
+            <p className="text-[10px] font-bold uppercase tracking-nav text-spectral/30">Best Streak</p>
           </div>
-          <p className="text-4xl font-light text-slate-800 dark:text-white tracking-tight">{bestStreak}</p>
+          <p className="text-4xl font-light text-spectral tracking-tight">{bestStreak}</p>
         </div>
       </div>
 
       {/* Contribution Graph (Heatmap) */}
-      <div className="glass-panel p-6 rounded-2xl overflow-hidden">
+      <div className="ghost-panel p-6 overflow-hidden">
         <div className="mb-6 flex items-center justify-between">
             <div className="flex flex-col gap-1">
-                <h3 className="font-semibold text-slate-800 dark:text-slate-100">Yearly Activity</h3>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Contributions</p>
+                <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Yearly Activity</h3>
+                <p className="text-[10px] text-spectral/20 uppercase tracking-micro">Contributions</p>
             </div>
           {/* Legend */}
-          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="hidden sm:flex items-center gap-2 text-[10px] text-spectral/30 uppercase tracking-micro">
             <span>Less</span>
             <div className="flex gap-1">
-              <div className="w-3 h-3 rounded-sm bg-slate-100 dark:bg-slate-800"></div>
-              <div className="w-3 h-3 rounded-sm bg-emerald-200 dark:bg-emerald-900"></div>
-              <div className="w-3 h-3 rounded-sm bg-emerald-300 dark:bg-emerald-800"></div>
-              <div className="w-3 h-3 rounded-sm bg-emerald-500 dark:bg-emerald-600"></div>
-              <div className="w-3 h-3 rounded-sm bg-emerald-700 dark:bg-emerald-500"></div>
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'rgba(240,240,250,0.04)' }}></div>
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'rgba(240,240,250,0.12)' }}></div>
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'rgba(240,240,250,0.25)' }}></div>
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'rgba(240,240,250,0.45)' }}></div>
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'rgba(240,240,250,0.75)' }}></div>
             </div>
             <span>More</span>
           </div>
         </div>
         
-        <div className="overflow-x-auto pb-2 custom-scrollbar">
+        <div className="overflow-x-auto pb-2">
             <div className="min-w-[700px]">
                 <div className="flex gap-1">
                     {heatmapData.map((week, wIndex) => (
@@ -357,18 +348,17 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                             {week.map((day, dIndex) => (
                                 <div 
                                     key={day.dateStr}
-                                    className={`w-[14px] h-[14px] rounded-[4px] transition-all duration-300 hover:scale-125 hover:z-10 relative cursor-pointer ${getHeatmapColor(day.intensity)}`}
+                                    className="w-[14px] h-[14px] rounded-[3px] transition-all duration-300 hover:scale-125 hover:z-10 relative cursor-pointer"
+                                    style={{ backgroundColor: getHeatmapColor(day.intensity) }}
                                     title={`${format(day.date, 'MMM d, yyyy')}: ${day.count} habits`}
                                 >
-                                    {/* Tooltip for better UX */}
                                 </div>
                             ))}
                         </div>
                     ))}
                 </div>
             </div>
-            <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mt-2 min-w-[700px] px-1">
-                 {/* Simple Month Labels logic - simplified for layout */}
+            <div className="flex justify-between text-[10px] text-spectral/20 uppercase tracking-micro mt-2 min-w-[700px] px-1">
                  <span>{format(subDays(new Date(), 364), 'MMM')}</span>
                  <span>{format(subDays(new Date(), 270), 'MMM')}</span>
                  <span>{format(subDays(new Date(), 180), 'MMM')}</span>
@@ -378,14 +368,14 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
         {/* Activity Trend - Takes up 2/3 columns */}
-        <div className="glass-panel p-6 rounded-2xl lg:col-span-2">
+        <div className="ghost-panel p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-8">
             <div className="flex flex-col gap-1">
-              <h3 className="font-semibold text-slate-800 dark:text-slate-100">Activity Trend</h3>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Last 30 Days</p>
+              <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Activity Trend</h3>
+              <p className="text-[10px] text-spectral/20 uppercase tracking-micro">Last 30 Days</p>
             </div>
           </div>
           <div className="h-72 w-full">
@@ -393,20 +383,20 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
               <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#f0f0fa" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#f0f0fa" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} horizontal={false} />
                 <XAxis 
                   dataKey="date" 
-                  tick={{ fill: axisColor, fontSize: 11 }} 
+                  tick={{ fill: axisColor, fontSize: 10 }} 
                   axisLine={false} 
                   tickLine={false}
                   minTickGap={30}
                 />
                 <YAxis 
-                  tick={{ fill: axisColor, fontSize: 11 }} 
+                  tick={{ fill: axisColor, fontSize: 10 }} 
                   axisLine={false} 
                   tickLine={false} 
                   allowDecimals={false}
@@ -415,11 +405,11 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                 <Area 
                   type="natural" 
                   dataKey="count" 
-                  stroke="#818cf8" 
-                  strokeWidth={3}
+                  stroke="#f0f0fa" 
+                  strokeWidth={2}
                   fillOpacity={1} 
                   fill="url(#colorCount)" 
-                  activeDot={{ r: 6, strokeWidth: 3, stroke: '#ffffff', fill: '#4f46e5' }}
+                  activeDot={{ r: 5, strokeWidth: 2, stroke: '#000000', fill: '#f0f0fa' }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -427,29 +417,29 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
         </div>
 
         {/* Weekly Performance - Takes up 1/3 column */}
-        <div className="glass-panel p-6 rounded-2xl">
+        <div className="ghost-panel p-6">
            <div className="mb-8 flex flex-col gap-1">
-              <h3 className="font-semibold text-slate-800 dark:text-slate-100">Weekly Focus</h3>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Volume</p>
+              <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Weekly Focus</h3>
+              <p className="text-[10px] text-spectral/20 uppercase tracking-micro">Daily Volume</p>
            </div>
            <div className="h-72 w-full">
              <ResponsiveContainer width="100%" height="100%">
                <BarChart data={dayOfWeekData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                  <defs>
                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                     <stop offset="0%" stopColor="#818cf8" />
-                     <stop offset="100%" stopColor="#4f46e5" />
+                     <stop offset="0%" stopColor="#f0f0fa" stopOpacity={0.6}/>
+                     <stop offset="100%" stopColor="#f0f0fa" stopOpacity={0.15}/>
                    </linearGradient>
                  </defs>
                  <CartesianGrid vertical={false} horizontal={false} />
                  <XAxis 
                    dataKey="name" 
-                   tick={{ fill: axisColor, fontSize: 11 }} 
+                   tick={{ fill: axisColor, fontSize: 10 }} 
                    axisLine={false} 
                    tickLine={false}
                  />
                  <YAxis 
-                   tick={{ fill: axisColor, fontSize: 11 }} 
+                   tick={{ fill: axisColor, fontSize: 10 }} 
                    axisLine={false} 
                    tickLine={false}
                    allowDecimals={false}
@@ -457,7 +447,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                  <Tooltip cursor={{ fill: tooltipCursorColor }} content={<CustomTooltip />} />
                  <Bar dataKey="value" radius={[6, 6, 6, 6]} maxBarSize={40}>
                     {dayOfWeekData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill="url(#barGradient)" fillOpacity={0.9} />
+                      <Cell key={`cell-${index}`} fill="url(#barGradient)" />
                     ))}
                  </Bar>
                </BarChart>
@@ -466,12 +456,12 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
          {/* Top Habits Leaderboard */}
-         <div className="glass-panel p-6 rounded-2xl">
+         <div className="ghost-panel p-6">
             <div className="mb-8 flex flex-col gap-1">
-               <h3 className="font-semibold text-slate-800 dark:text-slate-100">Consistency Tracker</h3>
-               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Top Performing Habits</p>
+               <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Consistency Tracker</h3>
+               <p className="text-[10px] text-spectral/20 uppercase tracking-micro">Top Performing Habits</p>
             </div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -482,14 +472,14 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                     type="category" 
                     dataKey="name" 
                     width={140} 
-                    tick={{ fill: darkMode ? '#94a3b8' : '#475569', fontSize: 12, fontWeight: 500 }} 
+                    tick={{ fill: 'rgba(240,240,250,0.5)', fontSize: 10 }} 
                     axisLine={false} 
                     tickLine={false}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="rate" radius={[12, 12, 12, 12]} barSize={12} background={{ fill: darkMode ? '#1e293b' : '#f1f5f9', radius: 12 }}>
+                  <Bar dataKey="rate" radius={[12, 12, 12, 12]} barSize={10} background={{ fill: 'rgba(240,240,250,0.04)', radius: 12 }}>
                     {consistencyData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill="#f0f0fa" fillOpacity={0.6} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -498,10 +488,10 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
          </div>
 
          {/* Category Distribution */}
-         <div className="glass-panel p-6 rounded-2xl">
+         <div className="ghost-panel p-6">
            <div className="mb-8 flex flex-col gap-1">
-              <h3 className="font-semibold text-slate-800 dark:text-slate-100">Category Split</h3>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Effort Distribution</p>
+              <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Category Split</h3>
+              <p className="text-[10px] text-spectral/20 uppercase tracking-micro">Effort Distribution</p>
            </div>
            <div className="h-72 w-full flex items-center justify-center">
              {categoryData.length > 0 ? (
@@ -513,8 +503,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                      cy="50%"
                      innerRadius={70}
                      outerRadius={90}
-                     paddingAngle={6}
-                     cornerRadius={10}
+                     paddingAngle={4}
+                     cornerRadius={6}
                      dataKey="value"
                      strokeWidth={0}
                    >
@@ -528,53 +518,48 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
                       verticalAlign="middle" 
                       align="right"
                       iconType="circle"
-                      formatter={(value) => <span className="text-xs text-slate-600 dark:text-slate-400 font-medium ml-1">{value}</span>}
+                      formatter={(value) => <span className="text-[10px] text-spectral/40 uppercase tracking-micro font-bold ml-1">{value}</span>}
                    />
                  </PieChart>
                </ResponsiveContainer>
              ) : (
-               <div className="text-slate-400 dark:text-slate-500 text-sm">No category data yet</div>
+               <div className="text-spectral/20 text-[10px] uppercase tracking-micro">No category data yet</div>
              )}
            </div>
          </div>
       </div>
 
       {/* Target Success Rate */}
-      <div className="glass-panel p-6 rounded-2xl">
+      <div className="ghost-panel p-6">
         <div className="mb-8 flex flex-col gap-1">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100">Goal Adherence</h3>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Success by Frequency</p>
+            <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Goal Adherence</h3>
+            <p className="text-[10px] text-spectral/20 uppercase tracking-micro">Success by Frequency</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {targetAchievementData.map((item) => (
-            <div key={item.name} className="glass-panel p-4 rounded-xl">
+            <div key={item.name} className="ghost-panel p-4">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h4 className="font-semibold text-slate-900 dark:text-white">{item.name}</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{item.type} Goal: {item.goal}</p>
+                  <h4 className="text-xs font-bold uppercase tracking-micro text-spectral">{item.name}</h4>
+                  <p className="text-[10px] text-spectral/20 uppercase tracking-micro">{item.type} Goal: {item.goal}</p>
                 </div>
-                <div className={`px-2 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider ${
-                  item.rate >= 80 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
-                  item.rate >= 50 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
-                  'bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                }`}>
+                <div className="px-2 py-1 rounded-ghost text-[10px] uppercase font-bold tracking-nav bg-[rgba(240,240,250,0.06)] text-spectral/60">
                   {item.rate}%
                 </div>
               </div>
-              <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800/80 rounded-full overflow-hidden">
+              <div className="h-1 w-full bg-[rgba(240,240,250,0.06)] rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all duration-500 shadow-sm ${
-                    item.rate >= 80 ? 'bg-emerald-500 shadow-emerald-500/50' :
-                    item.rate >= 50 ? 'bg-amber-500 shadow-amber-500/50' :
-                    'bg-rose-500 shadow-rose-500/50'
-                  }`}
-                  style={{ width: `${item.rate}%` }}
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${item.rate}%`,
+                    backgroundColor: item.rate >= 80 ? 'rgba(240,240,250,0.6)' : item.rate >= 50 ? 'rgba(240,240,250,0.3)' : 'rgba(240,240,250,0.15)'
+                  }}
                 />
               </div>
             </div>
           ))}
           {targetAchievementData.length === 0 && (
-             <div className="col-span-full text-center py-8 text-slate-400 dark:text-slate-500 text-sm">
+             <div className="col-span-full text-center py-8 text-spectral/20 text-[10px] uppercase tracking-micro">
                No target data available yet.
              </div>
           )}

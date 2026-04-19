@@ -4,73 +4,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══ SpaceX Design System ═══════════════════════════════════ */
+/* Pure black void. Spectral white (#f0f0fa). Ghost surfaces.  */
+/* Zero shadows. Zero color. Uppercase everything.             */
+/* ════════════════════════════════════════════════════════════= */
+
 /* ─── Base ─────────────────────────────────────────────────── */
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', Arial, Verdana, sans-serif;
+  background: #000000;
+  color: #f0f0fa;
 }
 
-/* ─── Light Mode: soft radial gradient background ─────────── */
+/* ─── Void Background ─────────────────────────────────────── */
 .hf-bg {
-  background: radial-gradient(circle at 30% 30%, #f8fafc 0%, #e2e8f0 40%, #bae6fd 100%);
+  background: #000000;
   min-height: 100vh;
 }
 
-/* ─── Dark Mode: deep slate gradient background ────────────── */
-.dark .hf-bg {
-  background: radial-gradient(circle at 30% 30%, #0f172a 0%, #1e293b 50%, #0c1a2e 100%);
+/* ─── Ghost Panel ─────────────────────────────────────────── */
+/* Translucent spectral surface floating on the void           */
+.ghost-panel {
+  background: rgba(240, 240, 250, 0.04);
+  border: 1px solid rgba(240, 240, 250, 0.10);
+  border-radius: 4px;
 }
 
-/* ─── Glassmorphism panel ──────────────────────────────────── */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+.ghost-panel-elevated {
+  background: rgba(240, 240, 250, 0.06);
+  border: 1px solid rgba(240, 240, 250, 0.14);
+  border-radius: 4px;
 }
 
-.dark .glass-panel {
-  background: rgba(30, 41, 59, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+/* ─── Ghost Navigation ────────────────────────────────────── */
+.ghost-nav {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(240, 240, 250, 0.08);
 }
 
-/* ─── Glassmorphism nav / top controls ────────────────────── */
-.glass-nav {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+/* ─── Ghost Button ────────────────────────────────────────── */
+.ghost-btn {
+  background: rgba(240, 240, 250, 0.10);
+  border: 1px solid rgba(240, 240, 250, 0.35);
+  border-radius: 32px;
+  color: #f0f0fa;
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 1.17px;
+  font-weight: 700;
 }
 
-.dark .glass-nav {
-  background: rgba(15, 23, 42, 0.75);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+.ghost-btn:hover {
+  background: rgba(240, 240, 250, 0.18);
+  border-color: rgba(240, 240, 250, 0.5);
 }
 
-/* ─── Glassmorphism button ────────────────────────────────── */
-.glass-button {
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: all 0.2s ease;
+.ghost-btn-dim {
+  background: rgba(240, 240, 250, 0.05);
+  border: 1px solid rgba(240, 240, 250, 0.15);
+  border-radius: 32px;
+  color: rgba(240, 240, 250, 0.6);
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 1.17px;
 }
 
-.glass-button:hover {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.dark .glass-button {
-  background: rgba(30, 41, 59, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.dark .glass-button:hover {
-  background: rgba(30, 41, 59, 0.8);
+.ghost-btn-dim:hover {
+  background: rgba(240, 240, 250, 0.10);
+  color: #f0f0fa;
 }
 
 /* ─── Habit icon box ──────────────────────────────────────── */
@@ -78,19 +81,14 @@ body {
   width: 40px;
   height: 40px;
   min-width: 40px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  background: rgba(240, 240, 250, 0.06);
+  border: 1px solid rgba(240, 240, 250, 0.10);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 14px;
   flex-shrink: 0;
-}
-
-.dark .icon-box {
-  background: rgba(30, 41, 59, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ─── Day status circles ──────────────────────────────────── */
@@ -104,74 +102,66 @@ body {
   font-size: 14px;
   margin: 0 3px;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   cursor: pointer;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.dark .status-circle {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(240, 240, 250, 0.08);
+  background: rgba(240, 240, 250, 0.03);
 }
 
 .status-circle:hover {
   transform: scale(1.12);
+  border-color: rgba(240, 240, 250, 0.25);
+  background: rgba(240, 240, 250, 0.08);
 }
 
 .status-circle.done-green {
-  background: rgba(187, 247, 208, 0.5);
-  border-color: rgba(74, 222, 128, 0.7);
-  box-shadow: 0 0 10px 2px rgba(74, 222, 128, 0.35);
-  color: #16a34a;
-}
-
-.dark .status-circle.done-green {
-  background: rgba(22, 163, 74, 0.2);
-  border-color: rgba(74, 222, 128, 0.5);
-  color: #4ade80;
+  background: rgba(240, 240, 250, 0.12);
+  border-color: rgba(240, 240, 250, 0.40);
+  box-shadow: 0 0 12px 2px rgba(240, 240, 250, 0.15);
+  color: #f0f0fa;
 }
 
 .status-circle.done-red {
-  background: rgba(254, 202, 202, 0.5);
-  border-color: rgba(248, 113, 113, 0.7);
-  box-shadow: 0 0 10px 2px rgba(248, 113, 113, 0.35);
-  color: #dc2626;
-}
-
-.dark .status-circle.done-red {
-  background: rgba(220, 38, 38, 0.2);
-  border-color: rgba(248, 113, 113, 0.5);
-  color: #f87171;
+  background: rgba(240, 240, 250, 0.06);
+  border-color: rgba(240, 240, 250, 0.20);
+  color: rgba(240, 240, 250, 0.5);
 }
 
 .status-circle.future-circle {
-  opacity: 0.3;
+  opacity: 0.2;
   cursor: not-allowed;
 }
 
 .status-circle.future-circle:hover {
   transform: none;
+  border-color: rgba(240, 240, 250, 0.08);
+  background: rgba(240, 240, 250, 0.03);
 }
 
 /* ─── Progress bar ────────────────────────────────────────── */
 .progress-base {
-  background: rgba(0, 0, 0, 0.08);
-  height: 5px;
-  border-radius: 3px;
+  background: rgba(240, 240, 250, 0.06);
+  height: 4px;
+  border-radius: 2px;
   width: 100%;
   overflow: hidden;
   margin-top: 5px;
 }
 
-.dark .progress-base {
-  background: rgba(255, 255, 255, 0.08);
+/* ─── Custom scrollbar ────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(240, 240, 250, 0.15); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(240, 240, 250, 0.3); }
+
+/* ─── Selection ───────────────────────────────────────────── */
+::selection {
+  background: rgba(240, 240, 250, 0.2);
+  color: #f0f0fa;
 }
 
-/* ─── Custom scrollbar ────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
-.dark ::-webkit-scrollbar-thumb { background: #475569; }
-.dark ::-webkit-scrollbar-thumb:hover { background: #64748B; }
+/* ─── Focus ring ──────────────────────────────────────────── */
+:focus-visible {
+  outline: 1px solid rgba(240, 240, 250, 0.35);
+  outline-offset: 2px;
+}

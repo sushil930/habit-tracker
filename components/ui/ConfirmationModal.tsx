@@ -24,18 +24,18 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 dark:bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md border border-slate-100 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="ghost-panel-elevated w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="p-6 flex gap-4">
-          <div className={`p-3 rounded-full h-fit shrink-0 ${variant === 'danger' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-500' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'}`}>
-            <AlertTriangle className="w-6 h-6" />
+          <div className="p-3 rounded bg-[rgba(240,240,250,0.06)] h-fit shrink-0">
+            <AlertTriangle className="w-5 h-5 text-spectral/50" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 leading-relaxed">{description}</p>
+            <h3 className="text-sm font-bold uppercase tracking-nav text-spectral">{title}</h3>
+            <p className="text-xs text-spectral/40 mt-2 leading-relaxed">{description}</p>
           </div>
         </div>
-        <div className="bg-slate-50 dark:bg-slate-950/50 px-6 py-4 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="border-t border-[rgba(240,240,250,0.08)] px-6 py-4 flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>

@@ -25,10 +25,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
 
   const summary = useMemo(() => generateReviewSummary(habits), [habits]);
   
-  // Filter habits that were active last month for the review loop
   const reviewableHabits = useMemo(() => {
-    // In a real app, we'd filter by creation date vs review period
-    // For now, review all active habits
     return habits.filter(h => !h.archived);
   }, [habits]);
 
@@ -68,7 +65,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
       onArchiveHabit(currentHabit.id);
     } else if (decision === 'modify') {
       setEditingHabit(currentHabit);
-      return; // Pause advancement until edit is done
+      return;
     }
 
     advance();
@@ -103,15 +100,15 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
   if (step === 'intro') {
     return (
       <div className="max-w-2xl mx-auto pt-12 px-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Calendar className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
+        <div className="w-20 h-20 rounded bg-[rgba(240,240,250,0.04)] border border-[rgba(240,240,250,0.08)] flex items-center justify-center mx-auto mb-8">
+          <Calendar className="w-9 h-9 text-spectral/30" />
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Monthly Reflection</h1>
-        <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-md mx-auto">
+        <h1 className="text-2xl font-bold uppercase tracking-stencil text-spectral mb-4">Monthly Reflection</h1>
+        <p className="text-xs text-spectral/40 uppercase tracking-nav mb-8 max-w-md mx-auto leading-relaxed">
           It's time to review {summary.periodLabel}. Let's look at what went well, what didn't, and adjust your goals for the month ahead.
         </p>
         <Button onClick={() => setStep('summary')} size="lg" className="w-full sm:w-auto">
-          Start Review <ArrowRight className="ml-2 w-5 h-5" />
+          Start Review <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </div>
     );
@@ -120,55 +117,55 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
   if (step === 'summary') {
     return (
       <div className="max-w-4xl mx-auto pt-8 px-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Month in Review</h2>
+        <h2 className="text-sm font-bold uppercase tracking-nav text-spectral mb-8">Month in Review</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {/* Best Habit */}
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-xl border border-emerald-100 dark:border-emerald-800/50">
+          <div className="ghost-panel p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-emerald-100 dark:bg-emerald-800 rounded-lg">
-                <Trophy className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              <div className="p-2 bg-[rgba(240,240,250,0.06)] rounded">
+                <Trophy className="w-5 h-5 text-spectral/40" />
               </div>
-              <h3 className="font-semibold text-emerald-900 dark:text-emerald-200">Top Performer</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-nav text-spectral/50">Top Performer</h3>
             </div>
             {summary.bestHabit ? (
               <div>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">{summary.bestHabit.name}</p>
-                <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1">Most consistent habit</p>
+                <p className="text-lg font-bold text-spectral">{summary.bestHabit.name}</p>
+                <p className="text-[10px] text-spectral/30 uppercase tracking-micro mt-1">Most consistent habit</p>
               </div>
             ) : (
-              <p className="text-slate-500 dark:text-slate-400">No data yet</p>
+              <p className="text-spectral/30 text-xs">No data yet</p>
             )}
           </div>
 
           {/* Missed Targets */}
-          <div className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-xl border border-amber-100 dark:border-amber-800/50">
+          <div className="ghost-panel p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-amber-100 dark:bg-amber-800 rounded-lg">
-                <Target className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+              <div className="p-2 bg-[rgba(240,240,250,0.06)] rounded">
+                <Target className="w-5 h-5 text-spectral/40" />
               </div>
-              <h3 className="font-semibold text-amber-900 dark:text-amber-200">Missed Targets</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-nav text-spectral/50">Missed Targets</h3>
             </div>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">{summary.missedTargets.length}</p>
-            <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">Habits below goal</p>
+            <p className="text-3xl font-light text-spectral">{summary.missedTargets.length}</p>
+            <p className="text-[10px] text-spectral/30 uppercase tracking-micro mt-1">Habits below goal</p>
           </div>
 
           {/* Declining */}
-          <div className="bg-rose-50 dark:bg-rose-900/20 p-6 rounded-xl border border-rose-100 dark:border-rose-800/50">
+          <div className="ghost-panel p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-rose-100 dark:bg-rose-800 rounded-lg">
-                <TrendingDown className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+              <div className="p-2 bg-[rgba(240,240,250,0.06)] rounded">
+                <TrendingDown className="w-5 h-5 text-spectral/40" />
               </div>
-              <h3 className="font-semibold text-rose-900 dark:text-rose-200">Needs Focus</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-nav text-spectral/50">Needs Focus</h3>
             </div>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">{summary.decliningHabits.length}</p>
-            <p className="text-sm text-rose-700 dark:text-rose-400 mt-1">Habits with low activity</p>
+            <p className="text-3xl font-light text-spectral">{summary.decliningHabits.length}</p>
+            <p className="text-[10px] text-spectral/30 uppercase tracking-micro mt-1">Habits with low activity</p>
           </div>
         </div>
 
         <div className="flex justify-end">
           <Button onClick={() => setStep('review')} size="lg">
-            Review Habits <ArrowRight className="ml-2 w-5 h-5" />
+            Review Habits <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -176,24 +173,24 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
   }
 
   if (step === 'review') {
-    if (!currentHabit) return null; // Should not happen
+    if (!currentHabit) return null;
 
     return (
       <div className="max-w-2xl mx-auto pt-12 px-4 animate-in fade-in slide-in-from-right-8 duration-300">
         <div className="text-center mb-8">
-          <span className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+          <span className="text-[10px] font-bold text-spectral/30 uppercase tracking-nav">
             Habit {currentHabitIndex + 1} of {reviewableHabits.length}
           </span>
           <div className="mt-4 flex justify-center">
              <div 
-              className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm"
-              style={{ backgroundColor: currentHabit.color + '20', color: currentHabit.color }}
+              className="w-16 h-16 rounded flex items-center justify-center border border-[rgba(240,240,250,0.10)] bg-[rgba(240,240,250,0.04)]"
+              style={{ color: currentHabit.color }}
             >
               <HabitIcon iconName={currentHabit.icon} className="w-8 h-8" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-4">{currentHabit.name}</h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">
+          <h2 className="text-lg font-bold uppercase tracking-stencil text-spectral mt-4">{currentHabit.name}</h2>
+          <p className="text-[10px] text-spectral/30 uppercase tracking-micro mt-2">
             Goal: {currentHabit.frequency
               ? (currentHabit.frequency.type === 'daily'
                   ? 'Daily'
@@ -202,38 +199,38 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={() => handleDecision('keep')}
-            className="p-6 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all group text-left"
+            className="ghost-panel p-6 hover:bg-[rgba(240,240,250,0.08)] hover:border-[rgba(240,240,250,0.25)] transition-all group text-left"
           >
-            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-800 flex items-center justify-center mb-3 transition-colors">
-              <Check className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+            <div className="w-10 h-10 rounded bg-[rgba(240,240,250,0.04)] group-hover:bg-[rgba(240,240,250,0.10)] flex items-center justify-center mb-3 transition-colors">
+              <Check className="w-5 h-5 text-spectral/30 group-hover:text-spectral" />
             </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white">Keep</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">It's working well. No changes needed.</p>
+            <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Keep</h3>
+            <p className="text-[10px] text-spectral/30 mt-1 uppercase tracking-micro">It's working well. No changes needed.</p>
           </button>
 
           <button
             onClick={() => handleDecision('modify')}
-            className="p-6 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all group text-left"
+            className="ghost-panel p-6 hover:bg-[rgba(240,240,250,0.08)] hover:border-[rgba(240,240,250,0.25)] transition-all group text-left"
           >
-            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800 flex items-center justify-center mb-3 transition-colors">
-              <Edit2 className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
+            <div className="w-10 h-10 rounded bg-[rgba(240,240,250,0.04)] group-hover:bg-[rgba(240,240,250,0.10)] flex items-center justify-center mb-3 transition-colors">
+              <Edit2 className="w-5 h-5 text-spectral/30 group-hover:text-spectral" />
             </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white">Modify</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Adjust the goal, frequency, or details.</p>
+            <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Modify</h3>
+            <p className="text-[10px] text-spectral/30 mt-1 uppercase tracking-micro">Adjust the goal, frequency, or details.</p>
           </button>
 
           <button
             onClick={() => handleDecision('drop')}
-            className="p-6 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-rose-500 dark:hover:border-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all group text-left"
+            className="ghost-panel p-6 hover:bg-[rgba(240,240,250,0.08)] hover:border-[rgba(240,240,250,0.25)] transition-all group text-left"
           >
-            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-rose-100 dark:group-hover:bg-rose-800 flex items-center justify-center mb-3 transition-colors">
-              <Archive className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400" />
+            <div className="w-10 h-10 rounded bg-[rgba(240,240,250,0.04)] group-hover:bg-[rgba(240,240,250,0.10)] flex items-center justify-center mb-3 transition-colors">
+              <Archive className="w-5 h-5 text-spectral/30 group-hover:text-spectral" />
             </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white">Drop</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Archive this habit for now.</p>
+            <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Drop</h3>
+            <p className="text-[10px] text-spectral/30 mt-1 uppercase tracking-micro">Archive this habit for now.</p>
           </button>
         </div>
 
@@ -252,12 +249,12 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ habits, onClose, onUpdat
   if (step === 'complete') {
     return (
       <div className="max-w-2xl mx-auto pt-20 px-4 text-center animate-in fade-in zoom-in-95 duration-500">
-        <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Check className="w-12 h-12 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
+        <div className="w-24 h-24 rounded bg-[rgba(240,240,250,0.04)] border border-[rgba(240,240,250,0.12)] flex items-center justify-center mx-auto mb-8">
+          <Check className="w-10 h-10 text-spectral/50" strokeWidth={2} />
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Review Complete!</h1>
-        <p className="text-lg text-slate-600 dark:text-slate-300 mb-8">
-          Your decisions have been saved. Here's to a productive month ahead!
+        <h1 className="text-2xl font-bold uppercase tracking-stencil text-spectral mb-4">Review Complete</h1>
+        <p className="text-xs text-spectral/40 uppercase tracking-nav mb-8 max-w-sm mx-auto leading-relaxed">
+          Your decisions have been saved. Here's to a productive month ahead.
         </p>
         <Button onClick={onClose} size="lg">
           Back to Dashboard

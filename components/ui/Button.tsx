@@ -13,20 +13,20 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props 
 }) => {
-  const baseStyles = "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none rounded-lg";
+  const baseStyles = "inline-flex items-center justify-center font-bold uppercase tracking-nav transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-spectral/35 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:opacity-30 disabled:pointer-events-none rounded-ghost";
   
   const variants = {
-    primary: "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm dark:bg-indigo-600 dark:hover:bg-indigo-500",
-    secondary: "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-slate-500 shadow-sm",
-    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm dark:bg-red-600 dark:hover:bg-red-500",
-    ghost: "bg-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-slate-500",
-    outline: "bg-transparent text-indigo-600 dark:text-indigo-400 border-2 border-indigo-600 dark:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:ring-indigo-500",
+    primary: "bg-[rgba(240,240,250,0.10)] text-spectral border border-[rgba(240,240,250,0.35)] hover:bg-[rgba(240,240,250,0.18)] hover:border-[rgba(240,240,250,0.5)]",
+    secondary: "bg-[rgba(240,240,250,0.04)] text-spectral/60 border border-[rgba(240,240,250,0.12)] hover:bg-[rgba(240,240,250,0.08)] hover:text-spectral",
+    danger: "bg-[rgba(240,240,250,0.06)] text-spectral/70 border border-[rgba(240,240,250,0.20)] hover:bg-[rgba(240,240,250,0.12)] hover:text-spectral",
+    ghost: "bg-transparent text-spectral/40 border border-transparent hover:text-spectral/80 hover:bg-[rgba(240,240,250,0.04)]",
+    outline: "bg-transparent text-spectral border border-[rgba(240,240,250,0.35)] hover:bg-[rgba(240,240,250,0.08)]",
   };
 
   const sizes = {
-    sm: "h-8 px-3 text-xs",
-    md: "h-10 px-4 text-sm",
-    lg: "h-12 px-6 text-base",
+    sm: "h-8 px-4 text-[10px]",
+    md: "h-10 px-5 text-xs",
+    lg: "h-12 px-7 text-xs",
   };
 
   return (

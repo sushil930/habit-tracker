@@ -38,35 +38,28 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
 
   // Helper to render the streak cell with milestone styling
   const renderStreakCell = (streak: number) => {
-    let textClass = "font-semibold text-slate-700 dark:text-slate-300";
-    let iconClass = "w-4 h-4 text-slate-300 dark:text-slate-600";
+    let textClass = "font-bold text-spectral/50";
+    let showFire = false;
     
-    // Default Active
     if (streak > 0) {
-      iconClass = "w-4 h-4 text-orange-500 fill-orange-500";
+      showFire = true;
+      textClass = "font-bold text-spectral/70";
     }
 
-    // Milestones styling
     if (streak >= 100) {
-      // 100+ Days: Legendary (Gradient + Large + Glow)
-      textClass = "text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-indigo-600 drop-shadow-sm";
-      iconClass = "w-5 h-5 text-indigo-500 fill-amber-500 animate-pulse drop-shadow-md";
+      textClass = "text-lg font-extrabold text-spectral";
     } else if (streak >= 30) {
-      // 30+ Days: Master (Larger + Glow)
-      textClass = "text-base font-extrabold text-orange-600 dark:text-orange-500 drop-shadow-[0_2px_4px_rgba(249,115,22,0.2)]";
-      iconClass = "w-5 h-5 text-orange-500 fill-orange-500 animate-pulse";
+      textClass = "text-base font-extrabold text-spectral/90";
     } else if (streak >= 7) {
-      // 7+ Days: Consistent (Bold)
-      textClass = "font-bold text-orange-600 dark:text-orange-500";
-      iconClass = "w-4 h-4 text-orange-500 fill-orange-500";
+      textClass = "font-bold text-spectral/80";
     }
 
     return (
       <div className="flex items-center justify-center gap-1 transition-all duration-300 group/streak" title={`${streak} day streak`}>
         {streak > 0 ? (
-          <FireAnimation className={`${iconClass.includes('w-5') ? 'w-5 h-5' : 'w-4 h-4'}`} />
+          <FireAnimation className={`${streak >= 30 ? 'w-5 h-5' : 'w-4 h-4'}`} />
         ) : (
-          <Flame className={`${iconClass} transition-all duration-500`} />
+          <Flame className="w-4 h-4 text-spectral/15 transition-all duration-500" />
         )}
         <span className={textClass}>{streak}</span>
       </div>
@@ -85,8 +78,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
     const freq = habit.frequency || { type: 'daily', goal: 1 };
     
     if (freq.type === 'daily') {
-      // For daily, we treat it as 7 days/week in the week view
-      const start = startOfWeek(dateInPeriod, { weekStartsOn: 1 }); // Assuming Monday start for consistency
+      const start = startOfWeek(dateInPeriod, { weekStartsOn: 1 });
       const end = addDays(start, 6);
       const days = eachDayOfInterval({ start, end });
       const completed = days.filter(d => habit.logs[format(d, 'yyyy-MM-dd')]).length;
@@ -113,43 +105,29 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
   };
 
   // Determine if we should use the heatmap view (compact) or the table view (checkboxes)
-  // We use heatmap for 'year' OR custom ranges longer than 31 days
   const useHeatmap = timeRange === 'year' || (timeRange === 'custom' && dates.length > 31);
   
-  // Calculate padding for CSS Grid Heatmap to align days correctly
-  // CSS Grid 'grid-auto-flow: column' fills top-down, left-right.
-  // We need to ensure the first date starts at the correct row (Sunday = 1, Monday = 2, etc.)
+  // Calculate padding for CSS Grid Heatmap
   const heatmapPadding = useMemo(() => {
     if (!useHeatmap || dates.length === 0) return 0;
-    const startDay = getDay(dates[0]); // 0 (Sun) to 6 (Sat)
+    const startDay = getDay(dates[0]);
     return startDay;
   }, [dates, useHeatmap]);
 
   if (habits.filter(h => !h.archived).length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 px-4 bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-950/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-        <div className="relative mb-8 group">
-          {/* Background Glow */}
-          <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full transform scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-          
-          {/* Main Icon Circle */}
-          <div className="relative bg-white dark:bg-slate-800 w-24 h-24 rounded-full flex items-center justify-center shadow-xl shadow-indigo-100 dark:shadow-none border border-indigo-50 dark:border-slate-700">
+      <div className="flex flex-col items-center justify-center py-24 px-4 ghost-panel">
+        <div className="relative mb-8">
+          <div className="w-24 h-24 rounded bg-[rgba(240,240,250,0.04)] border border-[rgba(240,240,250,0.08)] flex items-center justify-center">
             <FireAnimation className="w-12 h-12" />
-          </div>
-
-          {/* Floating Badge */}
-          <div className="absolute -right-3 -top-2 animate-bounce duration-[2000ms]">
-             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center border-[3px] border-white dark:border-slate-800 shadow-sm">
-                 <Sparkles className="w-5 h-5 text-white" />
-             </div>
           </div>
         </div>
         
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">Ignite Your Potential</h3>
-        <p className="text-slate-500 dark:text-slate-400 text-center max-w-sm leading-relaxed">
+        <h3 className="text-sm font-bold uppercase tracking-nav text-spectral mb-3">Ignite Your Potential</h3>
+        <p className="text-xs text-spectral/30 text-center max-w-sm uppercase tracking-micro leading-relaxed">
           {habits.length > 0 
             ? "All your habits are archived. Create a new one or restore old ones from settings." 
-            : "Consistency is the key to success. Create your first habit to start building your streak and tracking your growth."}
+            : "Consistency is the key to success. Create your first habit to start building your streak."}
         </p>
       </div>
     );
@@ -158,37 +136,37 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
   // --- Render Heatmap View (Year or Long Custom) ---
   if (useHeatmap) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
-        <div className="overflow-x-auto custom-scrollbar">
+      <div className="ghost-panel overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
-                <th className="p-4 w-48 font-medium text-slate-500 dark:text-slate-400 text-sm sticky left-0 bg-slate-50 dark:bg-slate-950 z-10">Habit</th>
-                <th className="p-4 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">
+              <tr className="border-b border-[rgba(240,240,250,0.06)]">
+                <th className="p-4 w-48 text-[10px] font-bold uppercase tracking-nav text-spectral/30 sticky left-0 bg-black z-10">Habit</th>
+                <th className="p-4 text-center text-[10px] font-bold uppercase tracking-nav text-spectral/30">
                     {timeRange === 'year' ? 'Yearly Activity' : 'Activity Overview'}
                 </th>
-                <th className="p-4 w-24 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Streak</th>
-                <th className="p-4 w-20 text-center font-medium text-slate-500 dark:text-slate-400 text-sm">Actions</th>
+                <th className="p-4 w-24 text-center text-[10px] font-bold uppercase tracking-nav text-spectral/30">Streak</th>
+                <th className="p-4 w-20 text-center text-[10px] font-bold uppercase tracking-nav text-spectral/30">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-[rgba(240,240,250,0.04)]">
               {sortedHabits.map((habit) => {
                 const streak = calculateStreak(habit);
                 const { isTailwind, color } = getColorProps(habit.color);
 
                 return (
-                  <tr key={habit.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="p-4 sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/50 transition-colors z-10 align-top">
+                  <tr key={habit.id} className="group hover:bg-[rgba(240,240,250,0.02)] transition-colors">
+                    <td className="p-4 sticky left-0 bg-black group-hover:bg-[rgba(240,240,250,0.02)] transition-colors z-10 align-top">
                       <div className="flex items-center gap-3">
                          <div 
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isTailwind ? color.replace('bg-', 'text-').replace('500', '600') + ' bg-opacity-10' : ''}`}
-                          style={!isTailwind ? { backgroundColor: color + '20', color: color } : {}}
+                          className="w-9 h-9 rounded flex items-center justify-center shrink-0 bg-[rgba(240,240,250,0.04)] border border-[rgba(240,240,250,0.08)]"
+                          style={{ color: color }}
                         >
                           <HabitIcon iconName={habit.icon} className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900 dark:text-slate-200">{habit.name}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">{habit.category}</p>
+                          <p className="text-xs font-bold uppercase tracking-micro text-spectral">{habit.name}</p>
+                          <p className="text-[10px] text-spectral/20 uppercase tracking-micro">{habit.category}</p>
                         </div>
                       </div>
                     </td>
@@ -196,7 +174,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                       {/* GitHub Style CSS Grid Heatmap */}
                       <div 
                         className="grid grid-rows-7 grid-flow-col gap-1 w-max"
-                        style={{ height: '88px' }} // 7 rows * (10px height + 2px gap approx)
+                        style={{ height: '88px' }}
                       >
                         {/* Padding Items for start alignment */}
                         {Array.from({ length: heatmapPadding }).map((_, i) => (
@@ -215,16 +193,14 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                                onClick={() => !isFuture && onToggle(habit.id, date)}
                                disabled={isFuture}
                                className={`w-2.5 h-2.5 rounded-[1px] transition-all relative ${
-                                 isCompleted && isTailwind ? color : ''
-                               } ${
                                  !isFuture 
-                                    ? 'cursor-pointer hover:scale-150 hover:z-20 hover:shadow-sm hover:brightness-95' 
-                                    : 'cursor-not-allowed opacity-40'
+                                    ? 'cursor-pointer hover:scale-150 hover:z-20' 
+                                    : 'cursor-not-allowed opacity-20'
                                }`}
                                style={{
                                  backgroundColor: isCompleted 
-                                  ? (isTailwind ? undefined : color) 
-                                  : (isFuture ? (document.documentElement.classList.contains('dark') ? '#0f172a' : '#f8fafc') : (document.documentElement.classList.contains('dark') ? '#1e293b' : '#e2e8f0')), // Future vs Empty
+                                  ? '#f0f0fa' 
+                                  : (isFuture ? 'rgba(240,240,250,0.02)' : 'rgba(240,240,250,0.06)'),
                                  opacity: isCompleted ? 0.9 : 1
                                }}
                                title={`${format(date, 'MMM d, yyyy')}${isCompleted ? ': Completed' : ''}`}
@@ -240,14 +216,14 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                       <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                          <button 
                           onClick={() => onArchive(habit.id)}
-                          className="p-2 text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                          className="p-2 text-spectral/15 hover:text-spectral/60 hover:bg-[rgba(240,240,250,0.06)] rounded transition-colors"
                           title="Archive habit"
                         >
                           <Archive size={16} />
                         </button>
                         <button 
                           onClick={() => onDelete(habit.id)}
-                          className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          className="p-2 text-spectral/15 hover:text-spectral/60 hover:bg-[rgba(240,240,250,0.06)] rounded transition-colors"
                           title="Delete habit"
                         >
                           <Trash2 size={16} />
@@ -266,14 +242,14 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
 
   // Each day column = circle (30px) + margin (3px × 2) = 36px
   const CELL_W = 36;
-  // Left section fixed width (icon-box 54px + name area) — matches card flex-1 min-w
+  // Left section fixed width
   const LEFT_W = 220;
-  // Center stats fixed width — matches card center section
+  // Center stats fixed width
   const STATS_W = 176;
 
-  // --- Render Week & Month View (Glassmorphism Card Rows) ---
+  // --- Render Week & Month View ---
   return (
-    <div className="space-y-4" data-purpose="habit-list">
+    <div className="space-y-3" data-purpose="habit-list">
 
       {/* Day-of-week column headers (week view only) */}
       {timeRange === 'week' && (
@@ -282,7 +258,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
           <div className="flex-1" />
           {/* Spacer: mirrors card center stats */}
           <div className="hidden sm:block" style={{ width: STATS_W, flexShrink: 0 }} />
-          {/* Day labels — separator to mirror card's border-l + pl-4 */}
+          {/* Day labels */}
           <div className="flex items-center" style={{ paddingLeft: 17 }}>
             {dates.map((date) => {
               const isToday = isSameDay(date, today);
@@ -292,11 +268,11 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                   className="flex flex-col items-center"
                   style={{ width: CELL_W, flexShrink: 0 }}
                 >
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-spectral/20 uppercase tracking-nav">
                     {format(date, 'EEE')}
                   </span>
-                  <span className={`text-xs font-semibold mt-0.5 w-6 h-6 flex items-center justify-center rounded-full ${
-                    isToday ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400'
+                  <span className={`text-xs font-bold mt-0.5 w-6 h-6 flex items-center justify-center rounded-full ${
+                    isToday ? 'bg-[rgba(240,240,250,0.15)] text-spectral' : 'text-spectral/30'
                   }`}>
                     {format(date, 'd')}
                   </span>
@@ -304,8 +280,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
               );
             })}
           </div>
-          {/* Spacer: mirrors hover-action buttons (opacity-0 but always take space) */}
-          {/* 2 × (p-1.5=12px + icon-15px) + gap-1=4px + ml-2=8px = 66px */}
+          {/* Spacer: mirrors hover-action buttons */}
           <div style={{ width: 66, flexShrink: 0 }} />
         </div>
       )}
@@ -324,28 +299,31 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
         const isMet = progress ? progress.current >= progress.target : false;
 
         return (
-          <div key={habit.id} className="glass-panel rounded-2xl p-4 flex items-center group">
+          <div key={habit.id} className="ghost-panel rounded p-4 flex items-center group">
 
             {/* Left: Icon + Name + Progress */}
             <div className="flex items-center flex-1 min-w-0">
               <div
                 className="icon-box"
-                style={!isTailwind ? { backgroundColor: color + '22', color } : {}}
+                style={{ color: color }}
               >
                 <HabitIcon
                   iconName={habit.icon}
-                  className={`w-5 h-5 ${isTailwind ? color.replace('bg-', 'text-').replace('500', '600') : ''}`}
+                  className="w-5 h-5"
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-slate-800 dark:text-slate-100 font-semibold truncate">
+                <h3 className="text-xs font-bold uppercase tracking-micro text-spectral truncate">
                   {habit.name}
                 </h3>
                 {timeRange === 'week' && progress && (
                   <div className="progress-base">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${isMet ? 'bg-emerald-500' : 'bg-indigo-500'}`}
-                      style={{ width: `${progressPercent}%` }}
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${progressPercent}%`,
+                        backgroundColor: isMet ? 'rgba(240,240,250,0.6)' : 'rgba(240,240,250,0.25)'
+                      }}
                     />
                   </div>
                 )}
@@ -355,10 +333,10 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
             {/* Center: Weekly badge + Streak (week view) */}
             {timeRange === 'week' && progress && (
               <div className="hidden sm:flex items-center gap-3 flex-shrink-0" style={{ width: STATS_W }}>
-                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold ${
+                <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-micro ${
                   isMet
-                    ? 'bg-emerald-100/60 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-slate-100/60 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400'
+                    ? 'bg-[rgba(240,240,250,0.10)] text-spectral/80'
+                    : 'bg-[rgba(240,240,250,0.04)] text-spectral/30'
                 }`}>
                   <Check className="w-3 h-3" strokeWidth={3} />
                   {progress.current}/{progress.target} {progress.label.toUpperCase()}
@@ -374,8 +352,8 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
               </div>
             )}
 
-            {/* Right: Day status circles — pl-4 + 1px border = 17px separator, mirrors header */}
-            <div className="flex items-center flex-shrink-0" style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: 16 }}>
+            {/* Right: Day status circles */}
+            <div className="flex items-center flex-shrink-0" style={{ borderLeft: '1px solid rgba(240,240,250,0.06)', paddingLeft: 16 }}>
               {dates.map((date) => {
                 const dateStr = format(date, 'yyyy-MM-dd');
                 const isCompleted = !!habit.logs[dateStr];
@@ -409,14 +387,14 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
               <button
                 onClick={() => onArchive(habit.id)}
-                className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                className="p-1.5 text-spectral/15 hover:text-spectral/60 hover:bg-[rgba(240,240,250,0.06)] rounded transition-colors"
                 title="Archive habit"
               >
                 <Archive size={15} />
               </button>
               <button
                 onClick={() => onDelete(habit.id)}
-                className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="p-1.5 text-spectral/15 hover:text-spectral/60 hover:bg-[rgba(240,240,250,0.06)] rounded transition-colors"
                 title="Delete habit"
               >
                 <Trash2 size={15} />
@@ -427,4 +405,4 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
       })}
     </div>
   );
-};
+};

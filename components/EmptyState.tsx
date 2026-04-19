@@ -25,15 +25,15 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] px-4 py-12 text-center animate-in fade-in zoom-in-95 duration-500">
-      <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
-        <Icon className="w-10 h-10 text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+      <div className="w-20 h-20 rounded bg-[rgba(240,240,250,0.04)] border border-[rgba(240,240,250,0.08)] flex items-center justify-center mb-8">
+        <Icon className="w-9 h-9 text-spectral/20" strokeWidth={1.5} />
       </div>
       
-      <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+      <h3 className="text-sm font-bold uppercase tracking-nav text-spectral mb-3">
         {title}
       </h3>
       
-      <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md leading-relaxed">
+      <p className="text-xs text-spectral/30 uppercase tracking-micro mb-8 max-w-sm leading-relaxed">
         {description}
       </p>
 

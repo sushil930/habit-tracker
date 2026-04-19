@@ -19,29 +19,29 @@ interface OnboardingTourProps {
 const STEPS: TourStep[] = [
   {
     title: "Welcome to HabitFlow",
-    description: "Your new premium workspace for personal growth. Let's take a quick tour and create your first habit.",
-    icon: <Sparkles className="w-8 h-8 text-indigo-600" />,
+    description: "Your new command center for personal growth. Let's take a quick tour and create your first habit.",
+    icon: <Sparkles className="w-8 h-8 text-spectral/60" />,
   },
   {
     targetId: 'habit-grid-area',
     title: "Your Weekly Grid",
-    description: "This is your command center. Click any day to log a habit. We've optimized this view to give you a clear snapshot of your week at a glance.",
+    description: "This is your command center. Click any day to log a habit. Optimized for a clear snapshot of your week at a glance.",
     placement: 'top',
-    icon: <LayoutDashboard className="w-6 h-6 text-indigo-600" />,
+    icon: <LayoutDashboard className="w-6 h-6 text-spectral/60" />,
   },
   {
     targetId: 'view-toggles',
     title: "Analytics & Settings",
-    description: "Switch seamlessly between your Daily Dashboard, detailed Analytics to visualize trends, and Settings to manage your data backup.",
+    description: "Switch seamlessly between your Dashboard, detailed Analytics to visualize trends, and Settings to manage your data.",
     placement: 'bottom',
-    icon: <BarChart2 className="w-6 h-6 text-indigo-600" />,
+    icon: <BarChart2 className="w-6 h-6 text-spectral/60" />,
   },
   {
     targetId: 'btn-new-habit',
     title: "Create a Habit",
     description: "Ready? Click the 'New Habit' button now to open the creation form.",
     placement: 'bottom',
-    icon: <Plus className="w-6 h-6 text-indigo-600" />,
+    icon: <Plus className="w-6 h-6 text-spectral/60" />,
     requiresInteraction: true,
   },
   {
@@ -49,7 +49,7 @@ const STEPS: TourStep[] = [
     title: "Customize Your Habit",
     description: "Give your habit a name, pick a category, and choose a color. When you're ready, click 'Create Habit' to save it.",
     placement: 'top',
-    icon: <PenTool className="w-6 h-6 text-indigo-600" />,
+    icon: <PenTool className="w-6 h-6 text-spectral/60" />,
     requiresInteraction: true,
   }
 ];
@@ -78,7 +78,6 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
   // 1. Handle Scrolling (Only when step changes)
   useEffect(() => {
     if (currentStep.targetId) {
-      // Small timeout to allow element to render (especially the modal)
       setTimeout(() => {
         const element = document.getElementById(currentStep.targetId!);
         if (element) {
@@ -95,7 +94,6 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
       if (element) {
         const r = element.getBoundingClientRect();
         
-        // Check if element is effectively hidden
         if (r.width === 0 && r.height === 0) {
             setRect(null);
             setPopoverStyle({});
@@ -105,7 +103,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
         setRect(r);
 
         const cardHeight = 280; 
-        const cardWidth = 380; // max-w-[380px]
+        const cardWidth = 380;
         const padding = 20;
 
         const spaceBelow = window.innerHeight - r.bottom;
@@ -113,7 +111,6 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
         
         let placement = currentStep.placement || 'bottom';
 
-        // Auto-flip logic
         if (placement === 'bottom' && spaceBelow < cardHeight && spaceAbove > cardHeight) {
           placement = 'top';
         } 
@@ -123,7 +120,6 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
 
         const style: React.CSSProperties = {};
 
-        // Horizontal centering with viewport clamping
         let left = r.left + (r.width / 2) - (cardWidth / 2);
         left = Math.max(16, Math.min(window.innerWidth - cardWidth - 16, left));
         
@@ -155,7 +151,6 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
     window.addEventListener('resize', handleUpdate);
     window.addEventListener('scroll', handleUpdate, { capture: true });
     
-    // Additional interval to catch layout changes (like modal appearing)
     const interval = setInterval(updatePosition, 500);
 
     return () => {
@@ -188,20 +183,20 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
       <div 
         className="absolute inset-0 transition-all duration-500 ease-in-out pointer-events-none"
         style={rect ? {
-            boxShadow: `0 0 0 9999px rgba(15, 23, 42, 0.75)`, 
+            boxShadow: `0 0 0 9999px rgba(0, 0, 0, 0.85)`, 
             top: rect.top - 4,
             left: rect.left - 4,
             width: rect.width + 8,
             height: rect.height + 8,
-            borderRadius: '12px'
+            borderRadius: '4px'
         } : {
-            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
             top: 0, left: 0, width: '100%', height: '100%'
         }}
       >
          {/* Animated ring around the target */}
          {rect && (
-           <div className="absolute -inset-[2px] rounded-xl border-2 border-indigo-400 opacity-50 animate-pulse" />
+           <div className="absolute -inset-[2px] rounded border border-[rgba(240,240,250,0.30)] opacity-50 animate-pulse" />
          )}
       </div>
 
@@ -212,19 +207,19 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
         style={!isCentered ? { position: 'absolute', ...popoverStyle, width: 'auto' } : {}}
       >
         <div className={`
-            bg-white p-6 rounded-2xl shadow-2xl w-full max-w-[380px] border border-white/20 
+            ghost-panel-elevated p-6 w-full max-w-[380px]
             animate-in fade-in zoom-in-95 duration-300 pointer-events-auto
             ${isCentered ? 'mx-4' : ''}
           `}>
           
           {/* Header */}
           <div className="flex items-start justify-between mb-5">
-            <div className="p-3 bg-indigo-50 rounded-xl shrink-0">
+            <div className="p-3 bg-[rgba(240,240,250,0.06)] rounded shrink-0">
               {currentStep.icon}
             </div>
             <button 
               onClick={onComplete}
-              className="text-xs font-medium text-slate-400 hover:text-slate-600 px-2 py-1 rounded hover:bg-slate-50 transition-colors"
+              className="text-[10px] font-bold uppercase tracking-nav text-spectral/30 hover:text-spectral px-2 py-1 rounded hover:bg-[rgba(240,240,250,0.06)] transition-colors"
             >
               Skip Tour
             </button>
@@ -232,23 +227,23 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
 
           {/* Content */}
           <div className="space-y-2 mb-8">
-            <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+            <h3 className="text-sm font-bold uppercase tracking-nav text-spectral">
               {currentStep.title}
             </h3>
-            <p className="text-slate-500 text-sm leading-relaxed">
+            <p className="text-xs text-spectral/40 leading-relaxed">
               {currentStep.description}
             </p>
           </div>
 
           {/* Footer Controls */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between pt-4 border-t border-[rgba(240,240,250,0.08)]">
             {/* Dots */}
             <div className="flex gap-1.5">
               {STEPS.map((_, idx) => (
                 <div 
                   key={idx} 
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    idx === currentStepIndex ? 'w-4 bg-indigo-600' : 'w-1.5 bg-slate-200'
+                  className={`h-1 rounded-full transition-all duration-300 ${
+                    idx === currentStepIndex ? 'w-4 bg-spectral' : 'w-1.5 bg-[rgba(240,240,250,0.15)]'
                   }`}
                 />
               ))}
@@ -269,7 +264,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isFo
               )}
               
               {currentStep.requiresInteraction ? (
-                <div className="text-sm font-medium text-indigo-600 animate-pulse px-3 py-1">
+                <div className="text-[10px] font-bold uppercase tracking-nav text-spectral/40 animate-pulse px-3 py-1">
                   Waiting for you...
                 </div>
               ) : (
