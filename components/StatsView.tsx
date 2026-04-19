@@ -184,60 +184,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
     return weeks;
   }, [habits]);
 
-  // 7. Target Achievement Rate
-  const targetAchievementData = useMemo(() => {
-    return habits.map(habit => {
-      const freq = habit.frequency || { type: 'daily', goal: 1 };
-      let successCount = 0;
-      let totalPeriods = 0;
-      
-      if (freq.type === 'daily') {
-        const end = startOfDay(new Date());
-        const start = subDays(end, 29);
-        const days = eachDayOfInterval({ start, end });
-        totalPeriods = 30;
-        successCount = days.filter(d => habit.logs[format(d, 'yyyy-MM-dd')]).length;
-      } else if (freq.type === 'weekly') {
-        const end = startOfDay(new Date());
-        const start = subWeeks(end, 8);
-        let current = startOfWeek(start, { weekStartsOn: 1 });
-        const endWeek = startOfWeek(end, { weekStartsOn: 1 });
-        
-        while (current <= endWeek) {
-           const weekEnd = addDays(current, 6);
-           const weekDays = eachDayOfInterval({ start: current, end: weekEnd });
-           const count = weekDays.filter(d => habit.logs[format(d, 'yyyy-MM-dd')]).length;
-           if (count >= freq.goal) successCount++;
-           totalPeriods++;
-           current = addWeeks(current, 1);
-        }
-      } else if (freq.type === 'monthly') {
-        const end = startOfDay(new Date());
-        const start = subMonths(end, 6);
-        let current = startOfMonth(start);
-        const endMonth = startOfMonth(end);
-        
-        while (current <= endMonth) {
-           const monthEnd = endOfMonth(current);
-           const monthDays = eachDayOfInterval({ start: current, end: monthEnd });
-           const count = monthDays.filter(d => habit.logs[format(d, 'yyyy-MM-dd')]).length;
-           if (count >= freq.goal) successCount++;
-           totalPeriods++;
-           current = addMonths(current, 1);
-        }
-      }
-      
-      const rate = totalPeriods > 0 ? Math.round((successCount / totalPeriods) * 100) : 0;
-      
-      return {
-        name: habit.name,
-        rate,
-        type: freq.type,
-        goal: freq.goal,
-        color: habit.color
-      };
-    }).sort((a, b) => b.rate - a.rate);
-  }, [habits]);
+
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -529,42 +476,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ habits, darkMode = false, 
          </div>
       </div>
 
-      {/* Target Success Rate */}
-      <div className="ghost-panel p-6">
-        <div className="mb-8 flex flex-col gap-1">
-            <h3 className="text-xs font-bold uppercase tracking-nav text-spectral">Goal Adherence</h3>
-            <p className="text-[10px] text-spectral/20 uppercase tracking-micro">Success by Frequency</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {targetAchievementData.map((item) => (
-            <div key={item.name} className="ghost-panel p-4">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-micro text-spectral">{item.name}</h4>
-                  <p className="text-[10px] text-spectral/20 uppercase tracking-micro">{item.type} Goal: {item.goal}</p>
-                </div>
-                <div className="px-2 py-1 rounded-ghost text-[10px] uppercase font-bold tracking-nav bg-[rgba(240,240,250,0.06)] text-spectral/60">
-                  {item.rate}%
-                </div>
-              </div>
-              <div className="h-1 w-full bg-[rgba(240,240,250,0.06)] rounded-full overflow-hidden">
-                <div 
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ 
-                    width: `${item.rate}%`,
-                    backgroundColor: item.rate >= 80 ? 'rgba(240,240,250,0.6)' : item.rate >= 50 ? 'rgba(240,240,250,0.3)' : 'rgba(240,240,250,0.15)'
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-          {targetAchievementData.length === 0 && (
-             <div className="col-span-full text-center py-8 text-spectral/20 text-[10px] uppercase tracking-micro">
-               No target data available yet.
-             </div>
-          )}
-        </div>
-      </div>
+
     </div>
   );
 };

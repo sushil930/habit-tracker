@@ -60,9 +60,7 @@ const App: React.FC = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   
-  // Custom range state (defaults to current month)
-  const [customStart, setCustomStart] = useState<Date>(startOfMonth(new Date()));
-  const [customEnd, setCustomEnd] = useState<Date>(endOfMonth(new Date()));
+
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -176,24 +174,13 @@ const App: React.FC = () => {
     if (timeRange === 'week') {
       const start = startOfWeek(currentDate, { weekStartsOn: 1 });
       return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-    } else if (timeRange === 'month') {
-      return eachDayOfInterval({
-        start: startOfMonth(currentDate),
-        end: endOfMonth(currentDate)
-      });
-    } else if (timeRange === 'year') {
+    } else {
       return eachDayOfInterval({
         start: startOfYear(currentDate),
         end: endOfYear(currentDate)
       });
-    } else {
-      // Custom Range
-      const start = customStart > customEnd ? customEnd : customStart;
-      const end = customEnd < customStart ? customStart : customEnd;
-      
-      return eachDayOfInterval({ start, end });
     }
-  }, [currentDate, timeRange, customStart, customEnd]);
+  }, [currentDate, timeRange]);
 
   const handleToggleHabit = (habitId: string, date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -303,54 +290,28 @@ const App: React.FC = () => {
 
   const handlePrev = () => {
     if (timeRange === 'week') setCurrentDate(subWeeks(currentDate, 1));
-    else if (timeRange === 'month') setCurrentDate(subMonths(currentDate, 1));
-    else if (timeRange === 'year') setCurrentDate(subYears(currentDate, 1));
     else {
-        // Custom: shift back by the duration of the range
-        const days = differenceInDays(customEnd, customStart) + 1;
-        setCustomStart(prev => addDays(prev, -days));
-        setCustomEnd(prev => addDays(prev, -days));
+        setCurrentDate(subYears(currentDate, 1));
     }
   };
 
   const handleNext = () => {
     if (timeRange === 'week') setCurrentDate(addWeeks(currentDate, 1));
-    else if (timeRange === 'month') setCurrentDate(addMonths(currentDate, 1));
-    else if (timeRange === 'year') setCurrentDate(addYears(currentDate, 1));
     else {
-        // Custom: shift forward by the duration of the range
-        const days = differenceInDays(customEnd, customStart) + 1;
-        setCustomStart(prev => addDays(prev, days));
-        setCustomEnd(prev => addDays(prev, days));
+        setCurrentDate(addYears(currentDate, 1));
     }
   };
 
-  const handleCustomDateChange = (type: 'start' | 'end', dateStr: string) => {
-    const date = parseISO(dateStr);
-    if (!isValid(date)) return;
 
-    if (type === 'start') {
-        setCustomStart(date);
-        // Prevent end before start
-        if (date > customEnd) setCustomEnd(date);
-    } else {
-        setCustomEnd(date);
-        // Prevent start after end
-        if (date < customStart) setCustomStart(date);
-    }
-  };
 
   const dateLabel = useMemo(() => {
     if (timeRange === 'week') {
       return `${format(datesToDisplay[0], 'MMM d')} - ${format(datesToDisplay[6], 'MMM d, yyyy')}`;
-    } else if (timeRange === 'month') {
-      return format(currentDate, 'MMMM yyyy');
-    } else if (timeRange === 'year') {
-      return format(currentDate, 'yyyy');
+
     } else {
-      return `${format(customStart, 'MMM d, yyyy')} - ${format(customEnd, 'MMM d, yyyy')}`;
+      return format(currentDate, 'yyyy');
     }
-  }, [datesToDisplay, timeRange, currentDate, customStart, customEnd]);
+  }, [datesToDisplay, timeRange, currentDate]);
 
   return (
     <div className="hf-bg text-spectral font-sans flex flex-col min-h-screen">
@@ -426,7 +387,7 @@ const App: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div>
                 <h1 className="text-3xl font-bold uppercase tracking-stencil text-spectral">
-                  {timeRange === 'year' ? 'Yearly Overview' : timeRange === 'month' ? 'Monthly Tracker' : timeRange === 'custom' ? 'Custom Range' : 'Weekly Tracker'}
+                  {timeRange === 'year' ? 'Yearly Overview' : 'Weekly Tracker'}
                 </h1>
                 <p className="text-xs text-spectral/30 uppercase tracking-nav mt-2">
                   {timeRange === 'year'
@@ -439,7 +400,7 @@ const App: React.FC = () => {
               <div className="ghost-panel p-1.5 flex items-center gap-2 flex-wrap">
                 {/* Range Toggle */}
                 <div className="flex bg-[rgba(240,240,250,0.04)] rounded p-0.5">
-                  {(['week', 'month', 'year', 'custom'] as TimeRange[]).map((range) => (
+                  {(['week', 'year'] as TimeRange[]).map((range) => (
                     <button
                       key={range}
                       onClick={() => setTimeRange(range)}
@@ -475,29 +436,7 @@ const App: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Custom Date Inputs */}
-                {timeRange === 'custom' && (
-                  <>
-                    <div className="w-px h-5 bg-[rgba(240,240,250,0.10)]" />
-                    <div className="flex items-center gap-2 px-1">
-                      <CalendarRange size={13} className="text-spectral/30" />
-                      <input
-                        type="date"
-                        value={format(customStart, 'yyyy-MM-dd')}
-                        onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                        className="text-xs font-bold uppercase tracking-nav text-spectral/60 focus:outline-none bg-transparent [color-scheme:dark]"
-                      />
-                      <span className="text-spectral/20">→</span>
-                      <input
-                        type="date"
-                        value={format(customEnd, 'yyyy-MM-dd')}
-                        onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                        className="text-xs font-bold uppercase tracking-nav text-spectral/60 focus:outline-none bg-transparent [color-scheme:dark]"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+               </div>
             </div>
 
             {/* Grid */}

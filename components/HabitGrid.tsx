@@ -105,7 +105,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
   };
 
   // Determine if we should use the heatmap view (compact) or the table view (checkboxes)
-  const useHeatmap = timeRange === 'year' || (timeRange === 'custom' && dates.length > 31);
+  const useHeatmap = timeRange === 'year';
   
   // Calculate padding for CSS Grid Heatmap
   const heatmapPadding = useMemo(() => {
@@ -113,6 +113,25 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
     const startDay = getDay(dates[0]);
     return startDay;
   }, [dates, useHeatmap]);
+
+  // Heatmap months labels — compute the grid column where each month starts
+  const heatmapMonths = useMemo(() => {
+    if (!useHeatmap || dates.length === 0) return [];
+    const months: { name: string; colIndex: number }[] = [];
+    let currentMonth = -1;
+    dates.forEach((d, i) => {
+      const m = d.getMonth();
+      if (m !== currentMonth) {
+        // The grid slot for this date = padding cells + date index
+        // Column in the grid = Math.floor(gridSlot / 7) since grid-rows-7
+        const gridSlot = i + heatmapPadding;
+        const colIndex = Math.floor(gridSlot / 7);
+        months.push({ name: format(d, 'MMM'), colIndex });
+        currentMonth = m;
+      }
+    });
+    return months;
+  }, [dates, heatmapPadding, useHeatmap]);
 
   if (habits.filter(h => !h.archived).length === 0) {
     return (
@@ -172,41 +191,65 @@ export const HabitGrid: React.FC<HabitGridProps> = ({ habits, dates, onToggle, o
                     </td>
                     <td className="p-4">
                       {/* GitHub Style CSS Grid Heatmap */}
-                      <div 
-                        className="grid grid-rows-7 grid-flow-col gap-1 w-max"
-                        style={{ height: '88px' }}
-                      >
-                        {/* Padding Items for start alignment */}
-                        {Array.from({ length: heatmapPadding }).map((_, i) => (
-                           <div key={`pad-${i}`} className="w-2.5 h-2.5" />
-                        ))}
+                      <div className="flex flex-col">
+                        <div className="flex items-start">
+                          {/* Day Labels */}
+                          <div className="flex flex-col gap-1 text-[8px] text-spectral/30 uppercase tracking-micro text-right pr-2 shrink-0" style={{ marginTop: '20px' }}>
+                            <span className="h-2.5 leading-[10px] opacity-0">Sun</span>
+                            <span className="h-2.5 leading-[10px]">Mon</span>
+                            <span className="h-2.5 leading-[10px] opacity-0">Tue</span>
+                            <span className="h-2.5 leading-[10px]">Wed</span>
+                            <span className="h-2.5 leading-[10px] opacity-0">Thu</span>
+                            <span className="h-2.5 leading-[10px]">Fri</span>
+                            <span className="h-2.5 leading-[10px] opacity-0">Sat</span>
+                          </div>
+                      
+                          <div className="relative flex flex-col">
+                            {/* Month Labels — aligned to grid columns */}
+                            <div className="relative h-4 mb-1.5 text-[10px] text-spectral/30 uppercase tracking-micro whitespace-nowrap">
+                              {heatmapMonths.map((m, i) => (
+                                <span key={i} className="absolute inline-block" style={{ left: `${m.colIndex * 14}px` }}>{m.name}</span>
+                              ))}
+                            </div>
 
-                        {dates.map((date, i) => {
-                           const dateStr = format(date, 'yyyy-MM-dd');
-                           const isCompleted = !!habit.logs[dateStr];
-                           const isFuture = isAfter(date, today);
-                           
-                           return (
-                             <button
-                               key={dateStr}
-                               type="button"
-                               onClick={() => !isFuture && onToggle(habit.id, date)}
-                               disabled={isFuture}
-                               className={`w-2.5 h-2.5 rounded-[1px] transition-all relative ${
-                                 !isFuture 
-                                    ? 'cursor-pointer hover:scale-150 hover:z-20' 
-                                    : 'cursor-not-allowed opacity-20'
-                               }`}
-                               style={{
-                                 backgroundColor: isCompleted 
-                                  ? '#f0f0fa' 
-                                  : (isFuture ? 'rgba(240,240,250,0.02)' : 'rgba(240,240,250,0.06)'),
-                                 opacity: isCompleted ? 0.9 : 1
-                               }}
-                               title={`${format(date, 'MMM d, yyyy')}${isCompleted ? ': Completed' : ''}`}
-                             />
-                           );
-                        })}
+                            <div 
+                              className="grid grid-rows-7 grid-flow-col gap-1 w-max relative z-10"
+                              style={{ height: '88px' }}
+                            >
+                              {/* Padding Items for start alignment */}
+                              {Array.from({ length: heatmapPadding }).map((_, i) => (
+                                 <div key={`pad-${i}`} className="w-2.5 h-2.5" />
+                              ))}
+
+                              {dates.map((date, i) => {
+                                 const dateStr = format(date, 'yyyy-MM-dd');
+                                 const isCompleted = !!habit.logs[dateStr];
+                                 const isFuture = isAfter(date, today);
+                                 
+                                 return (
+                                   <button
+                                     key={dateStr}
+                                     type="button"
+                                     onClick={() => !isFuture && onToggle(habit.id, date)}
+                                     disabled={isFuture}
+                                     className={`w-2.5 h-2.5 rounded-[1px] transition-all relative ${
+                                       !isFuture 
+                                          ? 'cursor-pointer hover:scale-150 hover:z-20' 
+                                          : 'cursor-not-allowed opacity-20'
+                                     }`}
+                                     style={{
+                                       backgroundColor: isCompleted 
+                                        ? '#f0f0fa' 
+                                        : (isFuture ? 'rgba(240,240,250,0.02)' : 'rgba(240,240,250,0.06)'),
+                                       opacity: isCompleted ? 0.9 : 1
+                                     }}
+                                     title={`${format(date, 'MMM d, yyyy')}${isCompleted ? ': Completed' : ''}`}
+                                   />
+                                 );
+                              })}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="p-4 text-center align-top pt-8">

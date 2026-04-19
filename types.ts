@@ -22,7 +22,7 @@ export interface Habit {
 }
 
 export type ViewMode = 'dashboard' | 'analytics' | 'settings' | 'review';
-export type TimeRange = 'week' | 'month' | 'year' | 'custom';
+export type TimeRange = 'week' | 'year';
 
 export interface WeeklyStats {
   totalCompleted: number;
